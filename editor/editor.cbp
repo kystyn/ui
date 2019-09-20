@@ -38,6 +38,8 @@
 			<Add library="comctl32" />
 		</Linker>
 		<Unit filename="main.cpp" />
+		<Unit filename="win.cpp" />
+		<Unit filename="win.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />
