@@ -1,5 +1,5 @@
-#ifndef WIN_H_INCLUDED
-#define WIN_H_INCLUDED
+#ifndef __WIN_H_INCLUDED
+#define __WIN_H_INCLUDED
 
 #include <windows.h>
 
