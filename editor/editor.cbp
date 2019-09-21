@@ -40,6 +40,8 @@
 		<Unit filename="main.cpp" />
 		<Unit filename="win.cpp" />
 		<Unit filename="win.h" />
+		<Unit filename="wndproc.cpp" />
+		<Unit filename="wndproc.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

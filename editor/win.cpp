@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "win.h"
 
 HWND initWnd(
@@ -20,7 +21,7 @@ HWND initWnd(
     wincl.hIconSm = LoadIcon (NULL, IDI_APPLICATION);
     wincl.hCursor = LoadCursor (NULL, IDC_ARROW);
     wincl.lpszMenuName = NULL;                 /* No menu */
-    wincl.cbClsExtra = 0;                      /* No extra bytes after the window class */
+    wincl.cbClsExtra = strlen(lpszArgument) + 1;                      /* No extra bytes after the window class */
     wincl.cbWndExtra = 0;                      /* structure or the window instance */
     /* Use Windows's default colour as the background of the window */
     wincl.hbrBackground = (HBRUSH) COLOR_BACKGROUND;
@@ -42,7 +43,7 @@ HWND initWnd(
            NULL,        /* The window is a child-window to desktop */
            NULL,                /* No menu */
            hInst,               /* Program Instance handler */
-           NULL                 /* No Window Creation data */
+           lpszArgument         /* No Window Creation data */
            );
 
     if (hWnd == NULL)
