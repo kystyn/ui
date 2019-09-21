@@ -37,10 +37,12 @@
 			<Add library="kernel32" />
 			<Add library="comctl32" />
 		</Linker>
-		<Unit filename="main.cpp" />
-		<Unit filename="win.cpp" />
+		<Unit filename="main.c" />
+		<Unit filename="editor.c" />
+		<Unit filename="win.c" />
 		<Unit filename="win.h" />
-		<Unit filename="wndproc.cpp" />
+		<Unit filename="editor.h" />
+		<Unit filename="wndproc.c" />
 		<Unit filename="wndproc.h" />
 		<Extensions>
 			<code_completion />
