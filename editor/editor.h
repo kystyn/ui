@@ -1,6 +1,8 @@
 #ifndef __EDITOR_H_
 #define __EDITOR_H_
 
-char * readFile( char const *name );
+#include <windows.h>
+
+BOOL readFile( char const *name, char **buf, int *len );
 
 #endif // __EDITOR_H_
