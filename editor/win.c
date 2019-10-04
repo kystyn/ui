@@ -17,9 +17,9 @@ HWND initWnd(
     wincl.cbSize = sizeof (WNDCLASSEX);
 
     /* Use default icon and mouse-pointer */
-    wincl.hIcon = LoadIcon (NULL, IDI_APPLICATION);
-    wincl.hIconSm = LoadIcon (NULL, IDI_APPLICATION);
-    wincl.hCursor = LoadCursor (NULL, IDC_ARROW);
+    wincl.hIcon = NULL;//LoadIcon (NULL, IDI_APPLICATION);
+    wincl.hIconSm = NULL;//LoadIcon (NULL, IDI_APPLICATION);
+    wincl.hCursor = LoadCursor(NULL, IDC_ARROW);
     wincl.lpszMenuName = NULL;                 /* No menu */
     wincl.cbClsExtra = strlen(lpszArgument) + 1;                      /* No extra bytes after the window class */
     wincl.cbWndExtra = 0;                      /* structure or the window instance */
@@ -50,6 +50,7 @@ HWND initWnd(
         return NULL;
 
     /* Make the window visible on the screen */
+    UpdateWindow(hWnd);
     ShowWindow(hWnd, nCmdShow);
 
     return hWnd;

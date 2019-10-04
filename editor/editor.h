@@ -3,6 +3,13 @@
 
 #include <windows.h>
 
-BOOL readFile( char const *name, char **buf, int *len );
+typedef struct tagTEXTDATA {
+    char **text;
+    int *strSize;
+    int strCount;
+} TEXTDATA;
+
+BOOL readFile( char const *name, TEXTDATA *data );
+void freeTextData( TEXTDATA *td );
 
 #endif // __EDITOR_H_
