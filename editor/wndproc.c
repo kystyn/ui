@@ -3,7 +3,7 @@
 #include "wndproc.h"
 #include "editor.h"
 
-void OnPaint( HWND hWnd, HFONT hFont, TEXTDATA *td, TEXTRNDDATA *trd, int tHeight )
+void OnPaint( HWND hWnd, HFONT hFont, TEXTDATA *td, TEXTRNDDATA *trd, TEXTMETRIC *tm )
 {
     int i;
     PAINTSTRUCT ps;
@@ -16,7 +16,8 @@ void OnPaint( HWND hWnd, HFONT hFont, TEXTDATA *td, TEXTRNDDATA *trd, int tHeigh
     SetBkColor(ps.hdc, RGB(0, 0, 255));
 
     for (i = trd->yLeftUp; i < min(trd->symsPerH + trd->yLeftUp, td->strCount); i++)
-        TextOut(ps.hdc, 0, i * tHeight, td->text + td->strOffsets[i] + trd->xLeftUp,
+        TextOut(ps.hdc, 0, (i - trd->yLeftUp) * tm->tmHeight,
+                td->text + td->strOffsets[i] + trd->xLeftUp,
                 min(td->strOffsets[i + 1] - td->strOffsets[i] - 1 -
                     (td->text[td->strOffsets[i] - 2] == '\r') - trd->xLeftUp,
                     trd->symsPerW));
@@ -105,7 +106,7 @@ LRESULT CALLBACK WindowProcedure( HWND hWnd, UINT message, WPARAM wParam, LPARAM
         PostQuitMessage(0);       /* send a WM_QUIT to the message queue */
         break;
     case WM_PAINT:
-        OnPaint(hWnd, hFont, &td, &trd, tm.tmHeight);
+        OnPaint(hWnd, hFont, &td, &trd, &tm);
         break;
     case WM_SIZE:
         OnSize(hWnd, &trd, &tm, LOWORD(lParam), HIWORD(lParam));
@@ -114,7 +115,7 @@ LRESULT CALLBACK WindowProcedure( HWND hWnd, UINT message, WPARAM wParam, LPARAM
         freeTextData(&td);
         exit(0);
         break;
-    case WM_KEYUP:
+    case WM_KEYDOWN:
         switch (wParam)
         {
         case VK_RIGHT:
@@ -127,13 +128,14 @@ LRESULT CALLBACK WindowProcedure( HWND hWnd, UINT message, WPARAM wParam, LPARAM
             invalidateScreen(hWnd, &trd, &tm);
             break;
         case VK_UP:
-            if (trd.yLeftUp < td.strCount - 1)
-                trd.yLeftUp++;
+            if (trd.yLeftUp > 0)
+
+                trd.yLeftUp--;
             invalidateScreen(hWnd, &trd, &tm);
             break;
         case VK_DOWN:
-            if (trd.yLeftUp > 0)
-                trd.yLeftUp--;
+            if (trd.yLeftUp < td.strCount - 1)
+                trd.yLeftUp++;
             invalidateScreen(hWnd, &trd, &tm);
             break;
         }
