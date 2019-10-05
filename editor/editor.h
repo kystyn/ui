@@ -9,6 +9,11 @@ typedef struct tagTEXTDATA {
     int strCount;
 } TEXTDATA;
 
+typedef struct tagTEXTRNDDATA {
+    int xLeftUp, yLeftUp;
+    int symsPerW, symsPerH;
+} TEXTRNDDATA;
+
 BOOL readFile( char const *name, TEXTDATA *data );
 void freeTextData( TEXTDATA *td );
 

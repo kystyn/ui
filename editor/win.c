@@ -24,7 +24,9 @@ HWND initWnd(
     wincl.cbClsExtra = strlen(lpszArgument) + 1;                      /* No extra bytes after the window class */
     wincl.cbWndExtra = 0;                      /* structure or the window instance */
     /* Use Windows's default colour as the background of the window */
-    wincl.hbrBackground = (HBRUSH) COLOR_BACKGROUND;
+
+    HBRUSH hBr = CreateSolidBrush(RGB(0, 0, 255));
+    wincl.hbrBackground = hBr;
 
     /* Register the window class, and if it fails quit the program */
     if (!RegisterClassEx (&wincl))

@@ -40,10 +40,10 @@ BOOL readFile( char const *name, TEXTDATA *data )
     if (data->strSize == NULL)
         return FALSE;
 
-    for (i = 0; i < len; i++)
+    for (i = 1; i < len; i++)
         if (buf[i] == '\n' || i + 1 == len)
         {
-            data->strSize[curStr] = i - prev + 1;
+            data->strSize[curStr] = i - prev - (buf[i - 1] == '\r') + (i + 1 == len);
             data->text[curStr] = malloc(data->strSize[curStr] + 1);
             if (data->text[curStr] == NULL)
                 return FALSE;
@@ -60,8 +60,22 @@ BOOL readFile( char const *name, TEXTDATA *data )
 void freeTextData( TEXTDATA *td )
 {
     int i;
-    free(td->strSize);
+
+    if (td->strSize != NULL)
+    {
+        free(td->strSize);
+        td->strSize = NULL;
+    }
+
     for (i = 0; i < td->strCount; i++)
-        free(td->text[i]);
-    free(td->text);
+        if (td->text[i] != NULL)
+        {
+            free(td->text[i]);
+            td->text[i] = NULL;
+        }
+    if (td->text != NULL)
+    {
+        free(td->text);
+        td->text = NULL;
+    }
 }
