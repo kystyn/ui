@@ -4,33 +4,21 @@
 #include "editor.h"
 
 
-void OnPaint( HWND hWnd, TEXTDATA *td, TEXTRNDDATA *trd, int tHeight )
+void OnPaint( HWND hWnd, HFONT hFont, TEXTDATA *td, TEXTRNDDATA *trd, int tHeight )
 {
     int i;
     PAINTSTRUCT ps;
     BeginPaint(hWnd, &ps);
 
-    HFONT hFont = CreateFont(
-                             16,
-                             0,
-                             0,
-                             0,
-                             FW_NORMAL,
-                             FALSE,
-                             FALSE,
-                             FALSE,
-                             ANSI_CHARSET,
-                             OUT_TT_PRECIS,
-                             CLIP_CHARACTER_PRECIS,
-                             CLEARTYPE_QUALITY,
-                             FIXED_PITCH,
-                             TEXT("Courier"));
     SelectObject(ps.hdc, hFont);
+
     for (i = trd->yLeftUp; i < min(trd->symsPerH, td->strCount) + trd->yLeftUp; i++)
-        TextOut(ps.hdc, 0, i * tHeight * 6 / 5, td->text[i] + trd->xLeftUp,
+        TextOut(ps.hdc, 0, i * tHeight, td->text[i] + trd->xLeftUp,
                 min(td->strSize[i], trd->symsPerW) - trd->xLeftUp);
+
+    //DeleteObject(hFont);
+
     EndPaint(hWnd, NULL);
-    DeleteObject(hFont);
 }
 
 void OnSize( TEXTRNDDATA *trd, TEXTMETRIC *tm, int newW, int newH )
@@ -47,6 +35,7 @@ LRESULT CALLBACK WindowProcedure( HWND hWnd, UINT message, WPARAM wParam, LPARAM
     static TEXTDATA td;
     static TEXTRNDDATA trd;
     static TEXTMETRIC tm;
+    static HFONT hFont;
 
     HDC hDC;
     RECT rc;
@@ -56,7 +45,23 @@ LRESULT CALLBACK WindowProcedure( HWND hWnd, UINT message, WPARAM wParam, LPARAM
     switch (message)                  /* handle the msg */
     {
     case WM_CREATE:
+        hFont = CreateFont(
+                             16,
+                             0,
+                             0,
+                             0,
+                             FW_NORMAL,
+                             FALSE,
+                             FALSE,
+                             FALSE,
+                             ANSI_CHARSET,
+                             OUT_TT_PRECIS,
+                             CLIP_CHARACTER_PRECIS,
+                             CLEARTYPE_QUALITY,
+                             FIXED_PITCH,
+                             TEXT("Courier"));
         hDC = GetDC(hWnd);
+        SelectObject(hDC, hFont);
         GetTextMetrics(hDC, &tm);
         ReleaseDC(hWnd, hDC);
         if (!readFile(((CREATESTRUCT *)lParam)->lpCreateParams, &td))
@@ -67,7 +72,7 @@ LRESULT CALLBACK WindowProcedure( HWND hWnd, UINT message, WPARAM wParam, LPARAM
         PostQuitMessage(0);       /* send a WM_QUIT to the message queue */
         break;
     case WM_PAINT:
-        OnPaint(hWnd, &td, &trd, tm.tmHeight);
+        OnPaint(hWnd, hFont, &td, &trd, tm.tmHeight);
         break;
     case WM_SIZE:
         rc.right = LOWORD(lParam);
