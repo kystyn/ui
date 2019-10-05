@@ -3,7 +3,7 @@
 
 #include <windows.h>
 
-HWND initWnd( HINSTANCE hInst, LPSTR lpszArgument,
+BOOL initWnd( HINSTANCE hInst, LPSTR lpszArgument,
               int nCmdShow, WNDPROC wndProc );
 
 int runMsgLoop( void );

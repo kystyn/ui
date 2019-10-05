@@ -4,8 +4,8 @@
 #include <windows.h>
 
 typedef struct tagTEXTDATA {
-    char **text;
-    int *strSize;
+    char *text;
+    int *strOffsets;
     int strCount;
 } TEXTDATA;
 

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "win.h"
 
-HWND initWnd(
+BOOL initWnd(
              HINSTANCE hInst, LPSTR lpszArgument,
              int nCmdShow, WNDPROC wndProc )
 {
@@ -21,7 +21,7 @@ HWND initWnd(
     wincl.hIconSm = NULL;//LoadIcon (NULL, IDI_APPLICATION);
     wincl.hCursor = LoadCursor(NULL, IDC_ARROW);
     wincl.lpszMenuName = NULL;                 /* No menu */
-    wincl.cbClsExtra = strlen(lpszArgument) + 1;                      /* No extra bytes after the window class */
+    wincl.cbClsExtra = 0;//strlen(lpszArgument) + 1;                      /* No extra bytes after the window class */
     wincl.cbWndExtra = 0;                      /* structure or the window instance */
     /* Use Windows's default colour as the background of the window */
 
@@ -30,7 +30,7 @@ HWND initWnd(
 
     /* Register the window class, and if it fails quit the program */
     if (!RegisterClassEx (&wincl))
-        return NULL;
+        return FALSE;
 
     /* The class is registered, let's create the program*/
     hWnd = CreateWindowEx (
@@ -49,13 +49,13 @@ HWND initWnd(
            );
 
     if (hWnd == NULL)
-        return NULL;
+        return FALSE;
 
     /* Make the window visible on the screen */
     UpdateWindow(hWnd);
     ShowWindow(hWnd, nCmdShow);
 
-    return hWnd;
+    return TRUE;
 }
 
 int runMsgLoop( void )
