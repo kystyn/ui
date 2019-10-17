@@ -13,15 +13,15 @@ BOOL initWnd(
     wincl.hInstance = hInst;
     wincl.lpszClassName = szClassName;
     wincl.lpfnWndProc = wndProc;      /* This function is called by windows */
-    wincl.style = CS_DBLCLKS;                 /* Catch double-clicks */
-    wincl.cbSize = sizeof (WNDCLASSEX);
+    wincl.style = CS_DBLCLKS | CS_OWNDC;                 /* Catch double-clicks */
+    wincl.cbSize = sizeof(WNDCLASSEX);
 
     /* Use default icon and mouse-pointer */
     wincl.hIcon = NULL;//LoadIcon (NULL, IDI_APPLICATION);
     wincl.hIconSm = NULL;//LoadIcon (NULL, IDI_APPLICATION);
     wincl.hCursor = LoadCursor(NULL, IDC_ARROW);
     wincl.lpszMenuName = NULL;                 /* No menu */
-    wincl.cbClsExtra = 0;//strlen(lpszArgument) + 1;                      /* No extra bytes after the window class */
+    wincl.cbClsExtra = 0;
     wincl.cbWndExtra = 0;                      /* structure or the window instance */
     /* Use Windows's default colour as the background of the window */
 
@@ -37,7 +37,9 @@ BOOL initWnd(
            0,                   /* Extended possibilites for variation */
            szClassName,         /* Classname */
            "Kystyn vim",       /* Title Text */
-           WS_OVERLAPPEDWINDOW, /* default window */
+           WS_OVERLAPPEDWINDOW |
+           WS_VSCROLL |
+           WS_HSCROLL, /* default window */
            CW_USEDEFAULT,       /* Windows decides the position */
            CW_USEDEFAULT,       /* where the window ends up on the screen */
            CW_USEDEFAULT,                 /* The programs width */
@@ -45,7 +47,7 @@ BOOL initWnd(
            NULL,        /* The window is a child-window to desktop */
            NULL,                /* No menu */
            hInst,               /* Program Instance handler */
-           lpszArgument         /* No Window Creation data */
+           lpszArgument
            );
 
     if (hWnd == NULL)
