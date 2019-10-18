@@ -13,10 +13,14 @@ typedef struct tagTEXTDATA {
 typedef struct tagTEXTRNDDATA {
     int xLeftUp, yLeftUp;
     int symsPerW, symsPerH;
+    int curLineInStr;
 } TEXTRNDDATA;
 
 BOOL readFile( char const *name, TEXTDATA *data );
 int findMaxStrWidth( TEXTDATA *td, int yStart, int yEnd );
 void freeTextData( TEXTDATA *td );
+int strByteLength( TEXTDATA *td, int number );
+int strTextLength( TEXTDATA *td, int number );
+int linesInCurStr( int strTL, TEXTRNDDATA *trd );
 
 #endif // __EDITOR_H_

@@ -2,6 +2,13 @@
 #include <windows.h>
 #include "wndproc.h"
 #include "editor.h"
+#include "menu.h"
+
+typedef enum
+{
+    VIEW = 0,
+    LAYOUT = 1
+} Mode;
 
 void invalidateScreen( HWND hWnd, TEXTRNDDATA *trd, TEXTMETRIC *tm )
 {
@@ -13,19 +20,34 @@ void invalidateScreen( HWND hWnd, TEXTRNDDATA *trd, TEXTMETRIC *tm )
     InvalidateRect(hWnd, &rc, TRUE);
 }
 
-void OnPaint( HWND hWnd, TEXTDATA *td, TEXTRNDDATA *trd, TEXTMETRIC *tm )
+void OnPaint( HWND hWnd, TEXTDATA *td, TEXTRNDDATA *trd, TEXTMETRIC *tm, Mode m )
 {
     int i;
     PAINTSTRUCT ps;
     BeginPaint(hWnd, &ps);
 
-    for (i = trd->yLeftUp; i < min(trd->symsPerH + trd->yLeftUp, td->strCount); i++)
-        TextOut(ps.hdc, 0, (i - trd->yLeftUp) * tm->tmHeight,
-                td->text + td->strOffsets[i] + trd->xLeftUp,
-                min(td->strOffsets[i + 1] - td->strOffsets[i] - 1 -
-                    (td->text[td->strOffsets[i] - 2] == '\r') - trd->xLeftUp,
-                    trd->symsPerW));
+    if (m == VIEW)
+        for (i = trd->yLeftUp; i < min(trd->symsPerH + trd->yLeftUp, td->strCount); i++)
+            TextOut(ps.hdc, 0, (i - trd->yLeftUp) * tm->tmHeight,
+                    td->text + td->strOffsets[i] + trd->xLeftUp,
+                    min(strTextLength(td, i) - trd->xLeftUp,
+                        trd->symsPerW));
 
+    else
+    {
+        int printed = 0;
+        for (i = trd->yLeftUp; i < min(trd->symsPerH + trd->yLeftUp, td->strCount) && printed <= trd->symsPerH; i++)
+        {
+            int
+                strBL = strByteLength(td, i),
+                strTL = strTextLength(td, i);
+            int strCount = strTL / trd->symsPerW + (strTL % trd->symsPerW != 0);
+            for (; trd->curLineInStr < strCount; trd->curLineInStr++, printed++)
+                TextOut(ps.hdc, 0, printed * tm->tmHeight,
+                        td->text + td->strOffsets[i] + strBL * trd->curLineInStr,
+                        min(strTL, trd->symsPerW));
+        }
+    }
     EndPaint(hWnd, &ps);
 }
 
@@ -56,7 +78,7 @@ void OnSize( HWND hWnd, TEXTRNDDATA *trd, TEXTMETRIC *tm, int newW, int newH )
 
 void OnKeyDown( HWND hWnd, WPARAM wParam,
                TEXTDATA *td,
-               TEXTRNDDATA *trd, TEXTMETRIC *tm )
+               TEXTRNDDATA *trd, TEXTMETRIC *tm, Mode m )
 {
     int minScroll, maxScroll;
     GetScrollRange(hWnd, SB_VERT, &minScroll, &maxScroll);
@@ -64,19 +86,47 @@ void OnKeyDown( HWND hWnd, WPARAM wParam,
     switch (wParam)
     {
     case VK_RIGHT:
+        if (m == LAYOUT)
+            break;
         trd->xLeftUp++;
         invalidateScreen(hWnd, trd, tm);
         break;
     case VK_LEFT:
+        if (m == LAYOUT)
+            break;
         trd->xLeftUp = max(0, trd->xLeftUp - 1);
         invalidateScreen(hWnd, trd, tm);
         break;
     case VK_UP:
-        trd->yLeftUp = max(0, trd->yLeftUp - 1);
+        if (m == VIEW)
+            trd->yLeftUp = max(0, trd->yLeftUp - 1);
+        else
+        {
+            int strTL = strTextLength(td, trd->yLeftUp);
+            if (trd->curLineInStr == 0)
+            {
+                trd->yLeftUp = max(0, trd->yLeftUp - 1);
+                trd->curLineInStr = linesInCurStr(strTL, trd) - 1;
+            }
+            else
+                trd->curLineInStr++;
+        }
         invalidateScreen(hWnd, trd, tm);
         break;
     case VK_DOWN:
-        trd->yLeftUp = min(td->strCount - 1 - trd->symsPerH, trd->yLeftUp + 1);
+        if (m == VIEW)
+            trd->yLeftUp = min(td->strCount - 1 - trd->symsPerH, trd->yLeftUp + 1);
+        else
+        {
+            int strTL = strTextLength(td, trd->yLeftUp);
+            if (trd->curLineInStr == linesInCurStr(strTL, trd) - 1)
+            {
+                trd->yLeftUp = min(td->strCount - 1 - trd->symsPerH, trd->yLeftUp + 1);
+                trd->curLineInStr = 0;
+            }
+            else
+                trd->curLineInStr--;
+        }
         invalidateScreen(hWnd, trd, tm);
         break;
     case VK_PRIOR:
@@ -89,7 +139,11 @@ void OnKeyDown( HWND hWnd, WPARAM wParam,
         break;
     case VK_HOME:
         if (!GetAsyncKeyState(VK_CONTROL))
+        {
+            if (m == LAYOUT)
+                break;
             trd->xLeftUp = 0;
+        }
         else
             trd->yLeftUp = 0;
         invalidateScreen(hWnd, trd, tm);
@@ -97,7 +151,11 @@ void OnKeyDown( HWND hWnd, WPARAM wParam,
     case VK_END:
         if (!GetAsyncKeyState(VK_CONTROL))
         {
-            int maxStrW = findMaxStrWidth(td, trd->yLeftUp, min(trd->yLeftUp + trd->symsPerH, td->strCount));
+            int maxStrW;
+            if (m == LAYOUT)
+                break;
+
+            maxStrW = findMaxStrWidth(td, trd->yLeftUp, min(trd->yLeftUp + trd->symsPerH, td->strCount));
             if (maxStrW - 1 >= trd->symsPerW)
                 trd->xLeftUp = maxStrW - 1 - trd->symsPerW;
         }
@@ -171,8 +229,10 @@ LRESULT CALLBACK WindowProcedure( HWND hWnd, UINT message, WPARAM wParam, LPARAM
     static HFONT hFont;
     static int minScroll = 0, maxScroll = 2000;
     static int fontSize = 26;
+    static Mode m = VIEW;
 
     HDC hDC;
+    HMENU hMenu;
 
     switch (message)                  /* handle the msg */
     {
@@ -201,16 +261,20 @@ LRESULT CALLBACK WindowProcedure( HWND hWnd, UINT message, WPARAM wParam, LPARAM
 
         GetTextMetrics(hDC, &tm);
         if (!readFile(((CREATESTRUCT *)lParam)->lpCreateParams, &td))
-            ;// check incorrect file
+            PostQuitMessage(0);// check incorrect file
         SetScrollRange(hWnd, SB_VERT, minScroll, maxScroll, TRUE);
         SetScrollRange(hWnd, SB_HORZ, minScroll, maxScroll, TRUE);
+
+        trd.curLineInStr = 0;
+        trd.xLeftUp = 0;
+        trd.yLeftUp = 0;
         break;
     case WM_DESTROY:
         freeTextData(&td);
         PostQuitMessage(0);       /* send a WM_QUIT to the message queue */
         break;
     case WM_PAINT:
-        OnPaint(hWnd, &td, &trd, &tm);
+        OnPaint(hWnd, &td, &trd, &tm, m);
         break;
     case WM_SIZE:
         OnSize(hWnd, &trd, &tm, LOWORD(lParam), HIWORD(lParam));
@@ -220,13 +284,31 @@ LRESULT CALLBACK WindowProcedure( HWND hWnd, UINT message, WPARAM wParam, LPARAM
         PostQuitMessage(0);       /* send a WM_QUIT to the message queue */
         break;
     case WM_KEYDOWN:
-        OnKeyDown(hWnd, wParam, &td, &trd, &tm);
+        OnKeyDown(hWnd, wParam, &td, &trd, &tm, m);
         break;
     case WM_VSCROLL:
         OnVScroll(hWnd, wParam, &td, &trd, &tm);
         break;
     case WM_HSCROLL:
         OnHScroll(hWnd, wParam, &td, &trd, &tm);
+        break;
+    case WM_COMMAND:
+        hMenu = GetMenu(hWnd);
+        switch (LOWORD(wParam))
+        {
+        case MENU_VIEW:
+            CheckMenuItem(hMenu, MENU_VIEW, MF_CHECKED);
+            CheckMenuItem(hMenu, MENU_LAYOUT, MF_UNCHECKED);
+            m = VIEW;
+            invalidateScreen(hWnd, &td, &trd);
+            break;
+        case MENU_LAYOUT:
+            CheckMenuItem(hMenu, MENU_VIEW, MF_UNCHECKED);
+            CheckMenuItem(hMenu, MENU_LAYOUT, MF_CHECKED);
+            m = LAYOUT;
+            invalidateScreen(hWnd, &td, &trd);
+            break;
+        }
         break;
     case WM_QUIT:
         freeTextData(&td);

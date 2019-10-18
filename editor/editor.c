@@ -73,6 +73,21 @@ void freeTextData( TEXTDATA *td )
     }
 }
 
+int strByteLength( TEXTDATA *td, int number )
+{
+    return td->strOffsets[number + 1] - td->strOffsets[number];
+}
+
+int strTextLength( TEXTDATA *td, int number )
+{
+    return td->strOffsets[number + 1] - td->strOffsets[number] - (td->text[td->strOffsets[number] - 2] == '\r');
+}
+
+int linesInCurStr( int strTL, TEXTRNDDATA *trd )
+{
+    return strTL / trd->symsPerW + (strTL % trd->symsPerW != 0);
+}
+
 int findMaxStrWidth( TEXTDATA *td, int yStart, int yEnd )
 {
     int i;
