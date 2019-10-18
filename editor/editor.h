@@ -7,6 +7,7 @@ typedef struct tagTEXTDATA {
     char *text;
     int *strOffsets;
     int strCount;
+    int maxStrWidth;
 } TEXTDATA;
 
 typedef struct tagTEXTRNDDATA {
@@ -15,6 +16,7 @@ typedef struct tagTEXTRNDDATA {
 } TEXTRNDDATA;
 
 BOOL readFile( char const *name, TEXTDATA *data );
+int findMaxStrWidth( TEXTDATA *td, int yStart, int yEnd );
 void freeTextData( TEXTDATA *td );
 
 #endif // __EDITOR_H_

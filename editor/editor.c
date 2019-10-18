@@ -54,6 +54,7 @@ BOOL readFile( char const *name, TEXTDATA *data )
             data->strOffsets[curStr++] = i + 1;
         }
 
+    data->maxStrWidth = findMaxStrWidth(data, 0, data->strCount);
     return TRUE;
 }
 
@@ -70,4 +71,15 @@ void freeTextData( TEXTDATA *td )
         free(td->text);
         td->text = NULL;
     }
+}
+
+int findMaxStrWidth( TEXTDATA *td, int yStart, int yEnd )
+{
+    int i;
+    int maxLen = 0;
+    for (i = yStart; i < yEnd; i++)
+        if (td->strOffsets[i + 1] - td->strOffsets[i] > maxLen)
+            maxLen = td->strOffsets[i + 1] - td->strOffsets[i];
+
+    return maxLen;
 }
