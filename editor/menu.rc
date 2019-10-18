@@ -1,0 +1,10 @@
+#include "menu.h"
+
+kystyn MENU
+{
+    POPUP "&Mode"
+    {
+        MENUITEM "&View",   MENU_VIEW,  CHECKED
+        MENUITEM "&Layout", MENU_LAYOUT
+    }
+}

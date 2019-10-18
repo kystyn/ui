@@ -217,7 +217,7 @@ LRESULT CALLBACK WindowProcedure( HWND hWnd, UINT message, WPARAM wParam, LPARAM
         break;
     case WM_CLOSE:
         freeTextData(&td);
-        exit(0);
+        PostQuitMessage(0);       /* send a WM_QUIT to the message queue */
         break;
     case WM_KEYDOWN:
         OnKeyDown(hWnd, wParam, &td, &trd, &tm);
@@ -227,6 +227,9 @@ LRESULT CALLBACK WindowProcedure( HWND hWnd, UINT message, WPARAM wParam, LPARAM
         break;
     case WM_HSCROLL:
         OnHScroll(hWnd, wParam, &td, &trd, &tm);
+        break;
+    case WM_QUIT:
+        freeTextData(&td);
         break;
     default:                      /* for msg that we don't deal with */
         return DefWindowProc(hWnd, message, wParam, lParam);

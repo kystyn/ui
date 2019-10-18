@@ -13,14 +13,14 @@ BOOL initWnd(
     wincl.hInstance = hInst;
     wincl.lpszClassName = szClassName;
     wincl.lpfnWndProc = wndProc;      /* This function is called by windows */
-    wincl.style = CS_DBLCLKS | CS_OWNDC;                 /* Catch double-clicks */
+    wincl.style = CS_OWNDC;                 /* Catch double-clicks */
     wincl.cbSize = sizeof(WNDCLASSEX);
 
     /* Use default icon and mouse-pointer */
     wincl.hIcon = NULL;//LoadIcon (NULL, IDI_APPLICATION);
     wincl.hIconSm = NULL;//LoadIcon (NULL, IDI_APPLICATION);
     wincl.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wincl.lpszMenuName = NULL;                 /* No menu */
+    wincl.lpszMenuName = szClassName;
     wincl.cbClsExtra = 0;
     wincl.cbWndExtra = 0;                      /* structure or the window instance */
     /* Use Windows's default colour as the background of the window */
@@ -31,6 +31,8 @@ BOOL initWnd(
     /* Register the window class, and if it fails quit the program */
     if (!RegisterClassEx (&wincl))
         return FALSE;
+
+    //HMENU hMenu = Load<em
 
     /* The class is registered, let's create the program*/
     hWnd = CreateWindowEx (

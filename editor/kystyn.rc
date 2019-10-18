@@ -1,0 +1,8 @@
+kystyn MENU
+{
+    POPUP "&Mode"
+    {
+        MENUITEM "&View",   CHECKED
+        MENUITEM "&Layout"
+    }
+}
