@@ -25,10 +25,17 @@ void LineDown( MODE m, TEXTDATA *td, TEXTRNDDATA *trd )
     else
     {
         int strTL = strTextLength(td, trd->yLeftUp);
-        if (trd->curLineInStr == linesInCurStr(strTL, trd) - 1)
+        int stringsFromEnd = 0, i;
+
+        for (i = 0; i < trd->symsPerH && stringsFromEnd <= trd->symsPerH; i++)
+            stringsFromEnd += linesInCurStr(strTextLength(td, td->strCount - 1 - i), trd);
+
+        if (trd->curLineInStr == linesInCurStr(strTL, trd) - 1 ||
+            trd->yLeftUp == td->strCount - 1 - i)
         {
-            trd->yLeftUp = min(td->strCount - 1 - trd->symsPerH, trd->yLeftUp + 1);
-            trd->curLineInStr = 0;
+            trd->yLeftUp = min(td->strCount - 1 - i, trd->yLeftUp + 1);
+            trd->curLineInStr = (trd->yLeftUp == td->strCount - 1 - i) *
+                    (trd->symsPerH - linesInCurStr(strTextLength(td, td->strCount - 1 - i), trd));
         }
         else
             trd->curLineInStr++;
@@ -37,12 +44,28 @@ void LineDown( MODE m, TEXTDATA *td, TEXTRNDDATA *trd )
 
 void PageUp( MODE m, TEXTDATA *td, TEXTRNDDATA *trd )
 {
-    trd->yLeftUp -= min(trd->yLeftUp, trd->symsPerH - 1);
+    if (m == VIEW)
+        trd->yLeftUp -= min(trd->yLeftUp, trd->symsPerH - 1);
 }
 
 void PageDown( MODE m, TEXTDATA *td, TEXTRNDDATA *trd )
 {
-    trd->yLeftUp += min(td->strCount - 1 - trd->yLeftUp - trd->symsPerH, trd->symsPerH - 1);
+    int toSkip = min(td->strCount - 1 - trd->yLeftUp - trd->symsPerH, trd->symsPerH - 1);
+
+    if (m == VIEW)
+        trd->yLeftUp += toSkip;
+    else
+    {
+        int skipped = 0; // how many strings are printed
+        for (; skipped < toSkip; trd->yLeftUp++)
+        {
+            int strTL = strTextLength(td, trd->yLeftUp);
+            int lineCount = linesInCurStr(strTL, trd);
+
+            trd->curLineInStr = (skipped + lineCount - trd->curLineInStr > toSkip) *
+                                toSkip - skipped;
+        }
+    }
 }
 
 void invalidateScreen( HWND hWnd, TEXTRNDDATA *trd, TEXTMETRIC *tm )
