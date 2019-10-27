@@ -15,7 +15,6 @@ void OnPaint( HWND hWnd, TEXTDATA *td, TEXTRNDDATA *trd, TEXTMETRIC *tm, MODE m 
                     td->text + td->strOffsets[i] + trd->xLeftUp,
                     min(strTextLength(td, i) - trd->xLeftUp,
                         trd->symsPerW));
-
     else
     {
         int printed = 0; // how many strings are printed
@@ -137,7 +136,7 @@ void OnKeyDown( HWND hWnd, WPARAM wParam,
         }
         else
         {
-            trd->yLeftUp = td->strCount - 1 - trd->symsPerH;
+            trd->yLeftUp = td->strCount + 1 - trd->symsPerH;
         }
         invalidateScreen(hWnd, trd, tm);
         break;
@@ -159,13 +158,16 @@ void OnVScroll( HWND hWnd, WPARAM wParam, TEXTDATA *td, TEXTRNDDATA *trd, TEXTME
     case SB_THUMBTRACK:
         if (oldPos != pos)
         {
-            trd->yLeftUp = (float)(pos - minScroll) / (maxScroll - minScroll) * (td->strCount - 1 - trd->symsPerH);
-
-            if (pos == maxScroll)
+            if (m == VIEW)
+                trd->yLeftUp = (float)(pos - minScroll) / (maxScroll - minScroll) * (td->strCount + 1 - trd->symsPerH);
+            else
             {
-                trd->yLeftUp = td->strCount - 1;
-                trd->curLineInStr =
-                    max(0, linesInCurStr(strTextLength(td, td->strCount - 1), trd) - trd->symsPerH);
+                int endYLeftUp, endCurLine;
+                endOfDocument(td, trd, &endYLeftUp, &endCurLine);
+                trd->yLeftUp = (float)(pos - minScroll) / (maxScroll - minScroll) * (endYLeftUp - trd->symsPerH);
+
+                if (pos == maxScroll)
+                    trd->curLineInStr = endCurLine;
             }
 
         }

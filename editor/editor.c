@@ -9,7 +9,7 @@ int symsCount( char *arr, int len, char sym )
     for (i = 0; i < len; i++)
         cnt += arr[i] == sym;
 
-    return cnt + 1;
+    return cnt + (arr[len - 1] != sym);
 }
 
 BOOL readFile( char const *name, TEXTDATA *data )
@@ -97,4 +97,20 @@ int findMaxStrWidth( TEXTDATA *td, int yStart, int yEnd )
             maxLen = td->strOffsets[i + 1] - td->strOffsets[i];
 
     return maxLen;
+}
+
+void endOfDocument( TEXTDATA *td, TEXTRNDDATA *trd,
+                    int *endYLeftUp, int *endCurLineInStr )
+{
+    int passed = 0;
+    *endYLeftUp = td->strCount - 1;
+    for (; passed < trd->symsPerH;)
+    {
+        int iterationPassed;
+        *endCurLineInStr = linesInCurStr(strTextLength(td, *endYLeftUp), trd) - 1;
+        iterationPassed = min(*endCurLineInStr, trd->symsPerH - passed);
+        *endCurLineInStr -= iterationPassed;
+        passed += iterationPassed;
+        *endYLeftUp -= (*endCurLineInStr == 0);
+    }
 }

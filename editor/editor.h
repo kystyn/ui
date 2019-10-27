@@ -22,5 +22,7 @@ void freeTextData( TEXTDATA *td );
 int strByteLength( TEXTDATA *td, int number );
 int strTextLength( TEXTDATA *td, int number );
 int linesInCurStr( int strTL, TEXTRNDDATA *trd );
+void endOfDocument( TEXTDATA *td, TEXTRNDDATA *trd,
+                    int *endYLeftUp, int *endCurLineInStr );
 
 #endif // __EDITOR_H_

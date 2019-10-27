@@ -49,6 +49,10 @@
 		<Unit filename="menu.rc">
 			<Option compilerVar="WINDRES" />
 		</Unit>
+		<Unit filename="utils.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="utils.h" />
 		<Unit filename="win.c">
 			<Option compilerVar="CC" />
 		</Unit>
