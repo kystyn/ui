@@ -58,7 +58,7 @@ void PageDown( MODE m, TEXTDATA *td, TEXTRNDDATA *trd )
         {
             int strTL = strTextLength(td, trd->yLeftUp);
             int lineCount = linesInCurStr(strTL, trd);
-            int skippedOnIteration = max(lineCount - trd->curLineInStr, toSkip - skipped);
+            int skippedOnIteration = min(lineCount - trd->curLineInStr, toSkip - skipped);
 
             skipped += skippedOnIteration;
             trd->curLineInStr = (toSkip - skipped) * (skippedOnIteration != lineCount - trd->curLineInStr);
