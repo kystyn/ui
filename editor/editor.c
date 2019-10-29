@@ -9,7 +9,7 @@ int symsCount( char *arr, int len, char sym )
     for (i = 0; i < len; i++)
         cnt += arr[i] == sym;
 
-    return cnt + (arr[len - 1] != sym);
+    return cnt + 1/*(arr[len - 1] != sym)*/;
 }
 
 BOOL readFile( char const *name, TEXTDATA *data )
@@ -80,7 +80,7 @@ int strByteLength( TEXTDATA *td, int number )
 
 int strTextLength( TEXTDATA *td, int number )
 {
-    return td->strOffsets[number + 1] - td->strOffsets[number] - (td->text[td->strOffsets[number] - 2] == '\r');
+    return td->strOffsets[number + 1] - td->strOffsets[number] - (td->text[td->strOffsets[number + 1] - 2] == '\r');
 }
 
 int linesInCurStr( int strTL, TEXTRNDDATA *trd )
@@ -106,11 +106,12 @@ void endOfDocument( TEXTDATA *td, TEXTRNDDATA *trd,
     *endYLeftUp = td->strCount - 1;
     for (; passed < trd->symsPerH;)
     {
-        int iterationPassed;
-        *endCurLineInStr = linesInCurStr(strTextLength(td, *endYLeftUp), trd) - 1;
-        iterationPassed = min(*endCurLineInStr, trd->symsPerH - passed);
-        *endCurLineInStr -= iterationPassed;
-        passed += iterationPassed;
-        *endYLeftUp -= (*endCurLineInStr == 0);
+        int passedOnIteration;
+        int strTL = strTextLength(td, *endYLeftUp);
+        *endCurLineInStr = linesInCurStr(strTL, trd) - 1;
+        passedOnIteration = min(*endCurLineInStr + 1, trd->symsPerH - passed);
+        *endCurLineInStr -= passedOnIteration;
+        passed += passedOnIteration;
+        *endYLeftUp -= (*endCurLineInStr == -1);
     }
 }

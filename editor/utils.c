@@ -21,23 +21,21 @@ void LineUp( MODE m, TEXTDATA *td, TEXTRNDDATA *trd )
 void LineDown( MODE m, TEXTDATA *td, TEXTRNDDATA *trd )
 {
     if (m == VIEW)
-        trd->yLeftUp = min(td->strCount + 1 - trd->symsPerH, trd->yLeftUp + 1);
+        trd->yLeftUp = min(td->strCount - trd->symsPerH, trd->yLeftUp + 1);
     else
     {
         int strTL = strTextLength(td, trd->yLeftUp);
-        int stringsFromEnd = 0, i;
-
-        for (i = 0; i < trd->symsPerH && stringsFromEnd < trd->symsPerH; i++)
-            stringsFromEnd += linesInCurStr(strTextLength(td, td->strCount - 1 - i), trd);
+        int endYLeftUp, endCurLineInStr;
+        endOfDocument(td, trd, &endYLeftUp, &endCurLineInStr);
 
         if (trd->curLineInStr >= linesInCurStr(strTL, trd) - 1 ||
-            trd->yLeftUp >= td->strCount - 1 - i)
+            trd->yLeftUp == endYLeftUp)
         {
-            trd->yLeftUp = min(td->strCount - 1 - i, trd->yLeftUp + 1);
-            trd->curLineInStr = (trd->yLeftUp == td->strCount - 1 - i) *
-                    (trd->symsPerH - linesInCurStr(strTextLength(td, td->strCount - 1 - i), trd));
+            trd->yLeftUp = min(endYLeftUp, trd->yLeftUp + 1);
+            trd->curLineInStr = (trd->yLeftUp == endYLeftUp) * endCurLineInStr;
         }
-        else
+        else if (!(trd->yLeftUp == endYLeftUp &&
+                   trd->curLineInStr == endCurLineInStr))
             trd->curLineInStr++;
     }
 }
@@ -51,18 +49,20 @@ void PageUp( MODE m, TEXTDATA *td, TEXTRNDDATA *trd )
 void PageDown( MODE m, TEXTDATA *td, TEXTRNDDATA *trd )
 {
     if (m == VIEW)
-        trd->yLeftUp += min(td->strCount - 1 - trd->symsPerH - trd->yLeftUp,
+        trd->yLeftUp += min(td->strCount - trd->symsPerH - trd->yLeftUp,
                             trd->symsPerH - 1);
     else
     {
-        int skipped = 0, toSkip = 1; // how many strings are printed
-        for (; skipped < toSkip; trd->yLeftUp++)
+        int skipped = 0, toSkip = trd->symsPerH - 1; // how many strings are printed
+        for (; skipped < toSkip; )
         {
             int strTL = strTextLength(td, trd->yLeftUp);
             int lineCount = linesInCurStr(strTL, trd);
+            int skippedOnIteration = max(lineCount - trd->curLineInStr, toSkip - skipped);
 
-            trd->curLineInStr = (skipped + lineCount - trd->curLineInStr > toSkip) *
-                                toSkip - skipped;
+            skipped += skippedOnIteration;
+            trd->curLineInStr = (toSkip - skipped) * (skippedOnIteration != lineCount - trd->curLineInStr);
+            trd->yLeftUp += (trd->curLineInStr == 0);
         }
     }
 }

@@ -19,10 +19,10 @@ void OnPaint( HWND hWnd, TEXTDATA *td, TEXTRNDDATA *trd, TEXTMETRIC *tm, MODE m 
     {
         int printed = 0; // how many strings are printed
         int overgone = 0;
-        for (i = trd->yLeftUp; i < min(trd->symsPerH + trd->yLeftUp, td->strCount); i++)
+        for (i = trd->yLeftUp; printed < trd->symsPerH && i < min(trd->symsPerH + trd->yLeftUp, td->strCount); i++)
         {
             int
-                j,
+                j = 0,
                 strTL = strTextLength(td, i);
             int strCount = linesInCurStr(strTL, trd);
             for (j = (1 - overgone) * trd->curLineInStr/* + overgone * 0*/;
@@ -136,7 +136,7 @@ void OnKeyDown( HWND hWnd, WPARAM wParam,
         }
         else
         {
-            trd->yLeftUp = td->strCount + 1 - trd->symsPerH;
+            trd->yLeftUp = td->strCount - trd->symsPerH;
         }
         invalidateScreen(hWnd, trd, tm);
         break;
@@ -159,12 +159,12 @@ void OnVScroll( HWND hWnd, WPARAM wParam, TEXTDATA *td, TEXTRNDDATA *trd, TEXTME
         if (oldPos != pos)
         {
             if (m == VIEW)
-                trd->yLeftUp = (float)(pos - minScroll) / (maxScroll - minScroll) * (td->strCount + 1 - trd->symsPerH);
+                trd->yLeftUp = (float)(pos - minScroll) / (maxScroll - minScroll) * (td->strCount - trd->symsPerH);
             else
             {
                 int endYLeftUp, endCurLine;
                 endOfDocument(td, trd, &endYLeftUp, &endCurLine);
-                trd->yLeftUp = (float)(pos - minScroll) / (maxScroll - minScroll) * (endYLeftUp - trd->symsPerH);
+                trd->yLeftUp = (float)(pos - minScroll) / (maxScroll - minScroll) * endYLeftUp;
 
                 if (pos == maxScroll)
                     trd->curLineInStr = endCurLine;
