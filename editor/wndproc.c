@@ -132,22 +132,21 @@ void OnKeyDown( HWND hWnd, WPARAM wParam,
         }
         else
         {
-            if (m == VIEW)
-                trd->yLeftUp = td->strCount - trd->symsPerH;
-            else
-            {
-                int yUp, curLine;
-                endOfDocument(td, trd, &yUp, &curLine);
-                trd->yLeftUp = yUp;
-                trd->curLineInStr = curLine;
-            }
+            int yUp, curLine;
+            endOfDocument(m, td, trd, &yUp, &curLine);
+            trd->yLeftUp = yUp;
+            trd->curLineInStr = curLine;
         }
         invalidateScreen(hWnd, trd, tm);
         break;
     }
 
-    SetScrollPos(hWnd, SB_VERT, minScroll + trd->yLeftUp * (float)(maxScroll - minScroll) / (td->strCount - 1 - trd->symsPerH), TRUE);
-    SetScrollPos(hWnd, SB_HORZ, minScroll + trd->xLeftUp * (float)(maxScroll - minScroll) / (td->maxStrWidth - 1 - trd->symsPerW), TRUE);
+    SetScrollPos(hWnd, SB_VERT, minScroll + trd->yLeftUp * (float)(maxScroll - minScroll) /
+                 ((td->strCount - 1 - trd->symsPerH > 0) * (td->strCount - 1 - trd->symsPerH) +
+                  (td->strCount - 1 - trd->symsPerH <= 0) * (td->strCount - 1)), TRUE);
+    SetScrollPos(hWnd, SB_HORZ, minScroll + trd->xLeftUp * (float)(maxScroll - minScroll) /
+                 ((td->maxStrWidth - 1 - trd->symsPerW > 0 ) * (td->maxStrWidth - 1 - trd->symsPerW) +
+                 (td->maxStrWidth - 1 - trd->symsPerW <= 0 ) * (td->maxStrWidth - 1)), TRUE);
 }
 
 void OnVScroll( HWND hWnd, WPARAM wParam, TEXTDATA *td, TEXTRNDDATA *trd, TEXTMETRIC *tm, MODE m )
@@ -162,18 +161,13 @@ void OnVScroll( HWND hWnd, WPARAM wParam, TEXTDATA *td, TEXTRNDDATA *trd, TEXTME
     case SB_THUMBTRACK:
         if (oldPos != pos)
         {
-            if (m == VIEW)
-                trd->yLeftUp = (float)(pos - minScroll) / (maxScroll - minScroll) * (td->strCount - trd->symsPerH);
-            else
-            {
-                int endYLeftUp, endCurLine;
-                endOfDocument(td, trd, &endYLeftUp, &endCurLine);
-                trd->yLeftUp = (float)(pos - minScroll) / (maxScroll - minScroll) * endYLeftUp;
+            int endYLeftUp, endCurLine;
+            endOfDocument(m, td, trd, &endYLeftUp, &endCurLine);
 
-                if (pos == maxScroll)
-                    trd->curLineInStr = endCurLine;
-            }
+            trd->yLeftUp = (float)(pos - minScroll) / (maxScroll - minScroll) * endYLeftUp;
 
+            if (pos == maxScroll)
+                trd->curLineInStr = endCurLine;
         }
         SetScrollPos(hWnd, SB_VERT, HIWORD(wParam), TRUE);
         invalidateScreen(hWnd, trd, tm);

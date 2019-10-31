@@ -3,6 +3,14 @@
 
 #include <windows.h>
 
+#include "menu.h"
+
+typedef enum
+{
+    VIEW = MENU_VIEW,
+    LAYOUT = MENU_LAYOUT
+} MODE;
+
 typedef struct tagTEXTDATA {
     char *text;
     int *strOffsets;
@@ -22,7 +30,7 @@ void freeTextData( TEXTDATA *td );
 int strByteLength( TEXTDATA *td, int number );
 int strTextLength( TEXTDATA *td, int number );
 int linesInCurStr( int strTL, TEXTRNDDATA *trd );
-void endOfDocument( TEXTDATA *td, TEXTRNDDATA *trd,
+void endOfDocument( MODE m, TEXTDATA *td, TEXTRNDDATA *trd,
                     int *endYLeftUp, int *endCurLineInStr );
 
 #endif // __EDITOR_H_

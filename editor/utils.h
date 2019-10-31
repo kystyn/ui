@@ -1,14 +1,7 @@
 #ifndef __UTILS_H_
 #define __UTILS_H_
 
-#include "menu.h"
 #include "editor.h"
-
-typedef enum
-{
-    VIEW = MENU_VIEW,
-    LAYOUT = MENU_LAYOUT
-} MODE;
 
 void LineUp( MODE m, TEXTDATA *td, TEXTRNDDATA *trd );
 void LineDown( MODE m, TEXTDATA *td, TEXTRNDDATA *trd );

@@ -99,23 +99,40 @@ int findMaxStrWidth( TEXTDATA *td, int yStart, int yEnd )
     return maxLen;
 }
 
-void endOfDocument( TEXTDATA *td, TEXTRNDDATA *trd,
+void endOfDocument( MODE m, TEXTDATA *td, TEXTRNDDATA *trd,
                     int *endYLeftUp, int *endCurLineInStr )
 {
     int passed = 0;
     int passedOnIteration;
     int lines;
-    *endYLeftUp = td->strCount - 1;
-    for (; passed < trd->symsPerH;)
+    if (m == LAYOUT)
     {
-        int
-            strTL = strTextLength(td, *endYLeftUp);
+        *endYLeftUp = td->strCount - 1;
+        for (; passed < trd->symsPerH;)
+        {
+            int
+                strTL = strTextLength(td, *endYLeftUp);
 
-        lines = linesInCurStr(strTL, trd);
-        passedOnIteration = min(lines, trd->symsPerH - passed);
-        passed += passedOnIteration;
+            lines = linesInCurStr(strTL, trd);
+            passedOnIteration = min(lines, trd->symsPerH - passed);
+            passed += passedOnIteration;
 
-        *endYLeftUp -= (passedOnIteration == lines);
+            if (passed == trd->symsPerH)
+                break;
+
+            *endYLeftUp -= (passedOnIteration == lines);
+            if (*endYLeftUp < 0)
+            {
+                *endYLeftUp = 0;
+                passedOnIteration = lines; // for *endCurLineInStr = ... make 0
+                break;
+            }
+        }
+        *endCurLineInStr = lines - passedOnIteration;
     }
-    *endCurLineInStr = lines - 1 - passedOnIteration;
+    else
+    {
+        *endYLeftUp = max(0, td->strCount - trd->symsPerH);
+        *endCurLineInStr = 0;
+    }
 }

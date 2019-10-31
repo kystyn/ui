@@ -9,9 +9,15 @@ void LineUp( MODE m, TEXTDATA *td, TEXTRNDDATA *trd )
         int strTL;
         if (trd->curLineInStr <= 0)
         {
-            trd->yLeftUp = max(0, trd->yLeftUp - 1);
+            trd->yLeftUp--;
+            if (trd->yLeftUp < 0)
+            {
+                trd->yLeftUp = 0;
+                trd->curLineInStr = 0;
+                return;
+            }
             strTL = strTextLength(td, trd->yLeftUp);
-            trd->curLineInStr = linesInCurStr(strTL, trd) - 1;
+            trd->curLineInStr = max(0, linesInCurStr(strTL, trd) - 1);
         }
         else
             trd->curLineInStr--;
@@ -20,13 +26,13 @@ void LineUp( MODE m, TEXTDATA *td, TEXTRNDDATA *trd )
 
 void LineDown( MODE m, TEXTDATA *td, TEXTRNDDATA *trd )
 {
+    int endYLeftUp, endCurLineInStr;
+    endOfDocument(m, td, trd, &endYLeftUp, &endCurLineInStr);
     if (m == VIEW)
-        trd->yLeftUp = min(td->strCount - trd->symsPerH, trd->yLeftUp + 1);
+        trd->yLeftUp = min(trd->yLeftUp + 1, endYLeftUp);
     else
     {
         int strTL = strTextLength(td, trd->yLeftUp);
-        int endYLeftUp, endCurLineInStr;
-        endOfDocument(td, trd, &endYLeftUp, &endCurLineInStr);
 
         if (trd->curLineInStr >= linesInCurStr(strTL, trd) - 1 ||
             trd->yLeftUp == endYLeftUp)
@@ -76,9 +82,12 @@ void PageUp( MODE m, TEXTDATA *td, TEXTRNDDATA *trd )
 
 void PageDown( MODE m, TEXTDATA *td, TEXTRNDDATA *trd )
 {
+    int endYLeftUp, endCurLineInStr;
+                endOfDocument(m, td, trd, &endYLeftUp, &endCurLineInStr);
+
     if (m == VIEW)
-        trd->yLeftUp += min(td->strCount - trd->symsPerH - trd->yLeftUp,
-                            trd->symsPerH - 1);
+        trd->yLeftUp = min(endYLeftUp,
+                            trd->yLeftUp + trd->symsPerH - 1);
     else
     {
         int skipped = 0, toSkip = trd->symsPerH - 1; // how many strings are printed
@@ -96,15 +105,11 @@ void PageDown( MODE m, TEXTDATA *td, TEXTRNDDATA *trd )
 
             // finish of document
             if (trd->yLeftUp > td->strCount - trd->symsPerH)
-            {
-                int endYLeftUp, endCurLineInStr;
-                endOfDocument(td, trd, &endYLeftUp, &endCurLineInStr);
                 if (endYLeftUp >= trd->yLeftUp)
                 {
                     trd->yLeftUp = endYLeftUp;
                     trd->curLineInStr = endCurLineInStr;
                 }
-            }
         }
     }
 }
