@@ -3,6 +3,16 @@
 #include "wndproc.h"
 #include "utils.h"
 
+void reboot( HWND hWnd, TEXTRNDDATA *trd )
+{
+    trd->curLineInStr = 0;
+    trd->xLeftUp = 0;
+    trd->yLeftUp = 0;
+
+    SetScrollPos(hWnd, SB_HORZ, 0, TRUE);
+    SetScrollPos(hWnd, SB_VERT, 0, TRUE);
+}
+
 void OnPaint( HWND hWnd, TEXTDATA *td, TEXTRNDDATA *trd, TEXTMETRIC *tm, MODE m )
 {
     int i;
@@ -13,7 +23,7 @@ void OnPaint( HWND hWnd, TEXTDATA *td, TEXTRNDDATA *trd, TEXTMETRIC *tm, MODE m 
         for (i = trd->yLeftUp; i < min(trd->symsPerH + trd->yLeftUp, td->strCount); i++)
             TextOut(ps.hdc, 0, (i - trd->yLeftUp) * tm->tmHeight,
                     td->text + td->strOffsets[i] + trd->xLeftUp,
-                    min(strTextLength(td, i) - trd->xLeftUp,
+                    min(strByteLength(td, i) - trd->xLeftUp,
                         trd->symsPerW));
     else
     {
@@ -204,7 +214,7 @@ void OnHScroll( HWND hWnd, WPARAM wParam, TEXTDATA *td, TEXTRNDDATA *trd, TEXTME
     switch (LOWORD(wParam))
     {
     case SB_THUMBTRACK:
-        trd->xLeftUp = (float)(pos - minScroll) / (maxScroll - minScroll) * (td->maxStrWidth - 1 - trd->symsPerW);
+        trd->xLeftUp = (float)(pos - minScroll) / (maxScroll - minScroll) * max(td->maxStrWidth - 1, td->maxStrWidth - 1 - trd->symsPerW);
         SetScrollPos(hWnd, SB_HORZ, HIWORD(wParam), TRUE);
         invalidateScreen(hWnd, trd, tm);
         break;
@@ -230,8 +240,11 @@ LRESULT CALLBACK WindowProcedure( HWND hWnd, UINT message, WPARAM wParam, LPARAM
     static int fontSize = 26;
     static MODE m = VIEW;
 
+    char szFile[100];
+
     HDC hDC;
     HMENU hMenu;
+    OPENFILENAME ofn = {0};
 
     switch (message)                  /* handle the msg */
     {
@@ -259,14 +272,9 @@ LRESULT CALLBACK WindowProcedure( HWND hWnd, UINT message, WPARAM wParam, LPARAM
         SetBkColor(hDC, RGB(0, 0, 255));
 
         GetTextMetrics(hDC, &tm);
-        if (!readFile(((CREATESTRUCT *)lParam)->lpCreateParams, &td))
-            PostQuitMessage(0);// check incorrect file
-        SetScrollRange(hWnd, SB_VERT, minScroll, maxScroll, TRUE);
-        SetScrollRange(hWnd, SB_HORZ, minScroll, maxScroll, TRUE);
-
-        trd.curLineInStr = 0;
-        trd.xLeftUp = 0;
-        trd.yLeftUp = 0;
+        readFile(((CREATESTRUCT *)lParam)->lpCreateParams, &td);
+        SetScrollRange(hWnd, SB_BOTH, minScroll, maxScroll, TRUE);
+        reboot(hWnd, &trd);
         break;
     case WM_DESTROY:
         freeTextData(&td);
@@ -308,6 +316,23 @@ LRESULT CALLBACK WindowProcedure( HWND hWnd, UINT message, WPARAM wParam, LPARAM
             ShowScrollBar(hWnd, SB_HORZ, FALSE);
             m = LAYOUT;
             trd.curLineInStr = 0;
+            invalidateScreen(hWnd, &trd, &tm);
+            break;
+        case MENU_OPEN:
+            ofn.lStructSize = sizeof(ofn);
+            ofn.hwndOwner = hWnd;
+            ofn.lpstrFile = szFile ;
+            ofn.lpstrFile[0] = '\0';
+            ofn.nMaxFile = sizeof( szFile );
+            ofn.lpstrFilter = "All\0*.*\0Text\0*.TXT\0";
+            ofn.nFilterIndex =1;
+            ofn.lpstrFileTitle = NULL ;
+            ofn.nMaxFileTitle = 0 ;
+            ofn.lpstrInitialDir=NULL ;
+            ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+            GetOpenFileName(&ofn);
+            readFile(ofn.lpstrFile, &td);
+            reboot(hWnd, &trd);
             invalidateScreen(hWnd, &trd, &tm);
             break;
         }

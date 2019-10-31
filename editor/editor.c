@@ -49,10 +49,9 @@ BOOL readFile( char const *name, TEXTDATA *data )
 
     data->strOffsets[0] = 0;
     for (i = 1; i < len; i++)
-        if (buf[i] == '\n' || i + 1 == len)
-        {
+        if (buf[i] == '\n')
             data->strOffsets[curStr++] = i + 1;
-        }
+    data->strOffsets[data->strCount] = len;
 
     data->maxStrWidth = findMaxStrWidth(data, 0, data->strCount);
     return TRUE;

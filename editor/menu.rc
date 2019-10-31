@@ -2,6 +2,10 @@
 
 kystyn MENU
 {
+    POPUP "&File"
+    {
+        MENUITEM "&Open",  MENU_OPEN
+    }
     POPUP "&Mode"
     {
         MENUITEM "&View",   MENU_VIEW,  CHECKED
