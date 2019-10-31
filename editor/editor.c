@@ -9,7 +9,7 @@ int symsCount( char *arr, int len, char sym )
     for (i = 0; i < len; i++)
         cnt += arr[i] == sym;
 
-    return cnt + 1/*(arr[len - 1] != sym)*/;
+    return cnt;
 }
 
 BOOL readFile( char const *name, TEXTDATA *data )
@@ -36,7 +36,7 @@ BOOL readFile( char const *name, TEXTDATA *data )
         return FALSE;
     }
 
-    data->strCount = symsCount(buf, len, '\n');
+    data->strCount = symsCount(buf, len, '\n') + 1;
     data->text = buf;
     // +1 cause save last sym offset
     data->strOffsets = malloc(sizeof(int) * (data->strCount + 1));
@@ -103,15 +103,19 @@ void endOfDocument( TEXTDATA *td, TEXTRNDDATA *trd,
                     int *endYLeftUp, int *endCurLineInStr )
 {
     int passed = 0;
+    int passedOnIteration;
+    int lines;
     *endYLeftUp = td->strCount - 1;
     for (; passed < trd->symsPerH;)
     {
-        int passedOnIteration;
-        int strTL = strTextLength(td, *endYLeftUp);
-        *endCurLineInStr = linesInCurStr(strTL, trd) - 1;
-        passedOnIteration = min(*endCurLineInStr + 1, trd->symsPerH - passed);
-        *endCurLineInStr -= passedOnIteration;
+        int
+            strTL = strTextLength(td, *endYLeftUp);
+
+        lines = linesInCurStr(strTL, trd);
+        passedOnIteration = min(lines, trd->symsPerH - passed);
         passed += passedOnIteration;
-        *endYLeftUp -= (*endCurLineInStr == -1);
+
+        *endYLeftUp -= (passedOnIteration == lines);
     }
+    *endCurLineInStr = lines - 1 - passedOnIteration;
 }

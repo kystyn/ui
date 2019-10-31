@@ -126,17 +126,21 @@ void OnKeyDown( HWND hWnd, WPARAM wParam,
     case VK_END:
         if (!GetAsyncKeyState(VK_CONTROL))
         {
-            int maxStrW;
-            if (m == LAYOUT)
-                break;
-
-            maxStrW = findMaxStrWidth(td, trd->yLeftUp, min(trd->yLeftUp + trd->symsPerH, td->strCount));
+            int maxStrW = findMaxStrWidth(td, trd->yLeftUp, min(trd->yLeftUp + trd->symsPerH, td->strCount));
             if (maxStrW - 1 >= trd->symsPerW)
                 trd->xLeftUp = maxStrW - 1 - trd->symsPerW;
         }
         else
         {
-            trd->yLeftUp = td->strCount - trd->symsPerH;
+            if (m == VIEW)
+                trd->yLeftUp = td->strCount - trd->symsPerH;
+            else
+            {
+                int yUp, curLine;
+                endOfDocument(td, trd, &yUp, &curLine);
+                trd->yLeftUp = yUp;
+                trd->curLineInStr = curLine;
+            }
         }
         invalidateScreen(hWnd, trd, tm);
         break;

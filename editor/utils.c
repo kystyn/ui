@@ -86,16 +86,16 @@ void PageDown( MODE m, TEXTDATA *td, TEXTRNDDATA *trd )
         {
             int strTL = strTextLength(td, trd->yLeftUp);
             int lineCount = linesInCurStr(strTL, trd);
-            int skippedOnIteration = min(lineCount - trd->curLineInStr - 1, toSkip - skipped);
+            int skippedOnIteration = min(lineCount - 1 - trd->curLineInStr, toSkip - skipped);
 
             trd->curLineInStr =
                 /*(skippedOnIteration == lineCount - trd->curLineInStr) * 0 +*/
-                (skippedOnIteration == toSkip - skipped) * (trd->curLineInStr + skippedOnIteration);
+                (skippedOnIteration == toSkip - skipped) * ((trd->curLineInStr + skippedOnIteration) % lineCount);
             skipped += skippedOnIteration;
             trd->yLeftUp += (trd->curLineInStr == 0);
 
             // finish of document
-            if (trd->yLeftUp > td->strCount - trd->symsPerH - trd->yLeftUp)
+            if (trd->yLeftUp > td->strCount - trd->symsPerH)
             {
                 int endYLeftUp, endCurLineInStr;
                 endOfDocument(td, trd, &endYLeftUp, &endCurLineInStr);
