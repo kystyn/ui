@@ -94,7 +94,7 @@ int findMaxStrWidth( TEXTDATA *td, int yStart, int yEnd )
     int maxLen = 0;
     for (i = yStart; i < yEnd; i++)
         if (td->strOffsets[i + 1] - td->strOffsets[i] > maxLen)
-            maxLen = td->strOffsets[i + 1] - td->strOffsets[i];
+            maxLen = strTextLength(td, i);
 
     return maxLen;
 }

@@ -84,7 +84,7 @@ void OnKeyDown( HWND hWnd, WPARAM wParam,
     case VK_RIGHT:
         if (m == LAYOUT)
             break;
-        trd->xLeftUp++;
+        trd->xLeftUp = min(trd->xLeftUp + 1, td->maxStrWidth - 1);
         invalidateScreen(hWnd, trd, tm);
         break;
     case VK_LEFT:
