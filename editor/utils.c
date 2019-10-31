@@ -54,14 +54,16 @@ void PageDown( MODE m, TEXTDATA *td, TEXTRNDDATA *trd )
     else
     {
         int skipped = 0, toSkip = trd->symsPerH - 1; // how many strings are printed
-        for (; skipped < toSkip; )
+        for (; skipped < toSkip;)
         {
             int strTL = strTextLength(td, trd->yLeftUp);
             int lineCount = linesInCurStr(strTL, trd);
             int skippedOnIteration = min(lineCount - trd->curLineInStr, toSkip - skipped);
 
+            trd->curLineInStr =
+                /*(skippedOnIteration == lineCount - trd->curLineInStr) * 0 +*/
+                (skippedOnIteration == toSkip - skipped) * (trd->curLineInStr + skippedOnIteration);
             skipped += skippedOnIteration;
-            trd->curLineInStr = (toSkip - skipped) * (skippedOnIteration != lineCount - trd->curLineInStr);
             trd->yLeftUp += (trd->curLineInStr == 0);
         }
     }
