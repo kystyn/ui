@@ -87,25 +87,23 @@ void PageUp( MODE m, TEXTDATA *td, TEXTRNDDATA *trd )
         {
             int skippedOnIteration = min(trd->curLineInStr + 1, toSkip - skipped);
 
-            trd->curLineInStr =
-                /*(skippedOnIteration == trd->curLineInStr + 1) * 0 +*/
-                (skippedOnIteration == toSkip - skipped) * (trd->curLineInStr - skippedOnIteration);
-            skipped += skippedOnIteration;
-            trd->yLeftUp -= (trd->curLineInStr == 0);
-
-            /* start of document */
-            if (trd->yLeftUp < 0)
+            if (skippedOnIteration == toSkip - skipped && trd->curLineInStr != 0)
+                trd->curLineInStr -= skippedOnIteration;
+            else
             {
-                trd->yLeftUp = 0;
-                trd->curLineInStr = 0;
-                return;
-            }
-
-            if (trd->curLineInStr == 0)
-            {
+                trd->yLeftUp--;
+                /* start of document */
+                if (trd->yLeftUp < 0)
+                {
+                    trd->yLeftUp = 0;
+                    trd->curLineInStr = 0;
+                    return;
+                }
                 int strTL = strTextLength(td, trd->yLeftUp);
                 trd->curLineInStr = linesInCurStr(strTL, trd) - 1;
             }
+
+            skipped += skippedOnIteration;
         }
     }
 }
@@ -125,21 +123,20 @@ void PageDown( MODE m, TEXTDATA *td, TEXTRNDDATA *trd )
         {
             int strTL = strTextLength(td, trd->yLeftUp);
             int lineCount = linesInCurStr(strTL, trd);
-            int skippedOnIteration = min(lineCount - 1 - trd->curLineInStr, toSkip - skipped);
+            int skippedOnIteration = min(lineCount - 1 - trd->curLineInStr + 1, toSkip - skipped);
 
             trd->curLineInStr =
                 /*(skippedOnIteration == lineCount - trd->curLineInStr) * 0 +*/
-                (skippedOnIteration == toSkip - skipped) * ((trd->curLineInStr + skippedOnIteration) % lineCount);
+                (skippedOnIteration == toSkip - skipped) * (trd->curLineInStr + skippedOnIteration);
             skipped += skippedOnIteration;
             trd->yLeftUp += (trd->curLineInStr == 0);
 
             // finish of document
-            if (trd->yLeftUp > td->strCount - trd->symsPerH)
-                if (endYLeftUp >= trd->yLeftUp)
-                {
-                    trd->yLeftUp = endYLeftUp;
-                    trd->curLineInStr = endCurLineInStr;
-                }
+            if (trd->yLeftUp >= endYLeftUp)
+            {
+                trd->yLeftUp = endYLeftUp;
+                trd->curLineInStr = endCurLineInStr;
+            }
         }
     }
 }
