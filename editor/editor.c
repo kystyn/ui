@@ -25,6 +25,8 @@ BOOL readFile( char const *name, TEXTDATA *data )
     len = ftell(F);
     fseek(F, SEEK_SET, 0);
 
+    freeTextData(data);
+
     buf = malloc(len + 1);
     if (buf == NULL)
         return FALSE;

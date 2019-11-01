@@ -3,7 +3,7 @@
 #include "wndproc.h"
 #include "utils.h"
 
-void reboot( HWND hWnd, TEXTRNDDATA *trd )
+void Reboot( HWND hWnd, TEXTRNDDATA *trd )
 {
     trd->curLineInStr = 0;
     trd->xLeftUp = 0;
@@ -23,7 +23,7 @@ void OnPaint( HWND hWnd, TEXTDATA *td, TEXTRNDDATA *trd, TEXTMETRIC *tm, MODE m 
         for (i = trd->yLeftUp; i < min(trd->symsPerH + trd->yLeftUp, td->strCount); i++)
             TextOut(ps.hdc, 0, (i - trd->yLeftUp) * tm->tmHeight,
                     td->text + td->strOffsets[i] + trd->xLeftUp,
-                    min(strByteLength(td, i) - trd->xLeftUp,
+                    min(strTextLength(td, i) - trd->xLeftUp,
                         trd->symsPerW));
     else
     {
@@ -94,7 +94,7 @@ void OnKeyDown( HWND hWnd, WPARAM wParam,
     case VK_RIGHT:
         if (m == LAYOUT)
             break;
-        trd->xLeftUp = min(trd->xLeftUp + 1, td->maxStrWidth - 1);
+        trd->xLeftUp = min(trd->xLeftUp + 1, td->maxStrWidth - trd->symsPerW - 1);
         invalidateScreen(hWnd, trd, tm);
         break;
     case VK_LEFT:
@@ -137,8 +137,7 @@ void OnKeyDown( HWND hWnd, WPARAM wParam,
         if (!GetAsyncKeyState(VK_CONTROL))
         {
             int maxStrW = findMaxStrWidth(td, trd->yLeftUp, min(trd->yLeftUp + trd->symsPerH, td->strCount));
-            if (maxStrW - 1 >= trd->symsPerW)
-                trd->xLeftUp = maxStrW - 1 - trd->symsPerW;
+            trd->xLeftUp = max(0, maxStrW - trd->symsPerW);
         }
         else
         {
@@ -151,12 +150,8 @@ void OnKeyDown( HWND hWnd, WPARAM wParam,
         break;
     }
 
-    SetScrollPos(hWnd, SB_VERT, minScroll + trd->yLeftUp * (float)(maxScroll - minScroll) /
-                 ((td->strCount - 1 - trd->symsPerH > 0) * (td->strCount - 1 - trd->symsPerH) +
-                  (td->strCount - 1 - trd->symsPerH <= 0) * (td->strCount - 1)), TRUE);
-    SetScrollPos(hWnd, SB_HORZ, minScroll + trd->xLeftUp * (float)(maxScroll - minScroll) /
-                 ((td->maxStrWidth - 1 - trd->symsPerW > 0 ) * (td->maxStrWidth - 1 - trd->symsPerW) +
-                 (td->maxStrWidth - 1 - trd->symsPerW <= 0 ) * (td->maxStrWidth - 1)), TRUE);
+    SetScrollPos(hWnd, SB_VERT, textHeightToVScroll(td, trd, minScroll, maxScroll), TRUE);
+    SetScrollPos(hWnd, SB_HORZ, textWidthToHScroll(td, trd, minScroll, maxScroll), TRUE);
 }
 
 void OnVScroll( HWND hWnd, WPARAM wParam, TEXTDATA *td, TEXTRNDDATA *trd, TEXTMETRIC *tm, MODE m )
@@ -174,29 +169,33 @@ void OnVScroll( HWND hWnd, WPARAM wParam, TEXTDATA *td, TEXTRNDDATA *trd, TEXTME
             int endYLeftUp, endCurLine;
             endOfDocument(m, td, trd, &endYLeftUp, &endCurLine);
 
-            trd->yLeftUp = (float)(pos - minScroll) / (maxScroll - minScroll) * endYLeftUp;
+            trd->yLeftUp = vScrollToTextHeight(endYLeftUp, pos, minScroll, maxScroll);
 
             if (pos == maxScroll)
                 trd->curLineInStr = endCurLine;
         }
-        SetScrollPos(hWnd, SB_VERT, HIWORD(wParam), TRUE);
         invalidateScreen(hWnd, trd, tm);
+        SetScrollPos(hWnd, SB_VERT, textHeightToVScroll(td, trd, minScroll, maxScroll), TRUE);
         break;
     case SB_LINEDOWN:
         LineDown(m, td, trd);
         invalidateScreen(hWnd, trd, tm);
+        SetScrollPos(hWnd, SB_VERT, textHeightToVScroll(td, trd, minScroll, maxScroll), TRUE);
         break;
     case SB_LINEUP:
         LineUp(m, td, trd);
         invalidateScreen(hWnd, trd, tm);
+        SetScrollPos(hWnd, SB_VERT, textHeightToVScroll(td, trd, minScroll, maxScroll), TRUE);
         break;
     case SB_PAGEUP:
         PageUp(m, td, trd);
         invalidateScreen(hWnd, trd, tm);
+        SetScrollPos(hWnd, SB_VERT, textHeightToVScroll(td, trd, minScroll, maxScroll), TRUE);
         break;
     case SB_PAGEDOWN:
         PageDown(m, td, trd);
         invalidateScreen(hWnd, trd, tm);
+        SetScrollPos(hWnd, SB_VERT, textHeightToVScroll(td, trd, minScroll, maxScroll), TRUE);
         break;
     }
 }
@@ -214,17 +213,19 @@ void OnHScroll( HWND hWnd, WPARAM wParam, TEXTDATA *td, TEXTRNDDATA *trd, TEXTME
     switch (LOWORD(wParam))
     {
     case SB_THUMBTRACK:
-        trd->xLeftUp = (float)(pos - minScroll) / (maxScroll - minScroll) * max(td->maxStrWidth - 1, td->maxStrWidth - 1 - trd->symsPerW);
-        SetScrollPos(hWnd, SB_HORZ, HIWORD(wParam), TRUE);
+        trd->xLeftUp = hScrollToTextWidth(td, trd, pos, minScroll, maxScroll);
         invalidateScreen(hWnd, trd, tm);
+        SetScrollPos(hWnd, SB_HORZ, textWidthToHScroll(td, trd, minScroll, maxScroll), TRUE);
         break;
     case SB_LINEDOWN:
         trd->xLeftUp = min(td->maxStrWidth - 1 - trd->symsPerW, trd->xLeftUp + 1);
         invalidateScreen(hWnd, trd, tm);
+        SetScrollPos(hWnd, SB_HORZ, textWidthToHScroll(td, trd, minScroll, maxScroll), TRUE);
         break;
     case SB_LINEUP:
         trd->xLeftUp = max(0, trd->xLeftUp - 1);
         invalidateScreen(hWnd, trd, tm);
+        SetScrollPos(hWnd, SB_HORZ, textWidthToHScroll(td, trd, minScroll, maxScroll), TRUE);
         break;
     }
 }
@@ -232,8 +233,8 @@ void OnHScroll( HWND hWnd, WPARAM wParam, TEXTDATA *td, TEXTRNDDATA *trd, TEXTME
 /*  This function is called by the Windows function DispatchMessage()  */
 LRESULT CALLBACK WindowProcedure( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-    static TEXTDATA td;
-    static TEXTRNDDATA trd;
+    static TEXTDATA td = {0};
+    static TEXTRNDDATA trd = {0};
     static TEXTMETRIC tm;
     static HFONT hFont;
     static int minScroll = 0, maxScroll = 2000;
@@ -244,7 +245,17 @@ LRESULT CALLBACK WindowProcedure( HWND hWnd, UINT message, WPARAM wParam, LPARAM
 
     HDC hDC;
     HMENU hMenu;
-    OPENFILENAME ofn = {0};
+    static OPENFILENAME ofn = {0};
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = hWnd;
+    ofn.lpstrFile = szFile ;
+    ofn.nMaxFile = sizeof( szFile );
+    ofn.lpstrFilter = "All\0*.*\0Text\0*.TXT\0";
+    ofn.nFilterIndex = 1;
+    ofn.lpstrFileTitle = NULL ;
+    ofn.nMaxFileTitle = 0 ;
+    //ofn.lpstrInitialDir=NULL ;
+    //ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
     switch (message)                  /* handle the msg */
     {
@@ -273,8 +284,9 @@ LRESULT CALLBACK WindowProcedure( HWND hWnd, UINT message, WPARAM wParam, LPARAM
 
         GetTextMetrics(hDC, &tm);
         readFile(((CREATESTRUCT *)lParam)->lpCreateParams, &td);
-        SetScrollRange(hWnd, SB_BOTH, minScroll, maxScroll, TRUE);
-        reboot(hWnd, &trd);
+        SetScrollRange(hWnd, SB_VERT, minScroll, maxScroll, TRUE);
+        SetScrollRange(hWnd, SB_HORZ, minScroll, maxScroll, TRUE);
+        Reboot(hWnd, &trd);
         break;
     case WM_DESTROY:
         freeTextData(&td);
@@ -319,20 +331,9 @@ LRESULT CALLBACK WindowProcedure( HWND hWnd, UINT message, WPARAM wParam, LPARAM
             invalidateScreen(hWnd, &trd, &tm);
             break;
         case MENU_OPEN:
-            ofn.lStructSize = sizeof(ofn);
-            ofn.hwndOwner = hWnd;
-            ofn.lpstrFile = szFile ;
-            ofn.lpstrFile[0] = '\0';
-            ofn.nMaxFile = sizeof( szFile );
-            ofn.lpstrFilter = "All\0*.*\0Text\0*.TXT\0";
-            ofn.nFilterIndex =1;
-            ofn.lpstrFileTitle = NULL ;
-            ofn.nMaxFileTitle = 0 ;
-            ofn.lpstrInitialDir=NULL ;
-            ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
             GetOpenFileName(&ofn);
             readFile(ofn.lpstrFile, &td);
-            reboot(hWnd, &trd);
+            Reboot(hWnd, &trd);
             invalidateScreen(hWnd, &trd, &tm);
             break;
         }

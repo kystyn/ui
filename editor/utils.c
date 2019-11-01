@@ -1,5 +1,35 @@
 #include "utils.h"
 
+int textWidthToHScroll( TEXTDATA *td, TEXTRNDDATA *trd, int minScroll, int maxScroll )
+{
+    if (td->maxStrWidth - trd->symsPerW - 1 > 0)
+        return minScroll + trd->xLeftUp * (float)(maxScroll - minScroll) /
+                    (td->maxStrWidth - trd->symsPerW - 1);
+    return minScroll + trd->xLeftUp * (float)(maxScroll - minScroll) /
+                    (trd->symsPerW - 1);
+}
+
+int textHeightToVScroll( TEXTDATA *td, TEXTRNDDATA *trd, int minScroll, int maxScroll )
+{
+    return minScroll + trd->yLeftUp * (float)(maxScroll - minScroll) /
+                 max(td->strCount - 1 - trd->symsPerH, td->strCount - 1);
+}
+
+int hScrollToTextWidth( TEXTDATA *td, TEXTRNDDATA *trd, int scrollPos, int minScroll, int maxScroll )
+{
+    if (td->maxStrWidth - trd->symsPerW - 1 > 0)
+            return (float)(scrollPos - minScroll) / (maxScroll - minScroll) *
+                (td->maxStrWidth - trd->symsPerW - 1);
+
+    return (float)(scrollPos - minScroll) / (maxScroll - minScroll) *
+        (trd->symsPerW - 1);
+}
+
+int vScrollToTextHeight( int endYLeftUp, int scrollPos, int minScroll, int maxScroll )
+{
+    return (float)(scrollPos - minScroll) / (maxScroll - minScroll) * endYLeftUp;
+}
+
 void LineUp( MODE m, TEXTDATA *td, TEXTRNDDATA *trd )
 {
     if (m == VIEW)
