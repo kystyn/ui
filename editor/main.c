@@ -14,8 +14,9 @@ int WINAPI WinMain( HINSTANCE hThisInstance,
                     LPSTR lpszArgument,
                     int nCmdShow )
 {
+    HBRUSH hBr;
     if (initWnd(hThisInstance, lpszArgument,
-                        nCmdShow, WindowProcedure))
-        runMsgLoop();
+                        nCmdShow, WindowProcedure, &hBr))
+        runMsgLoop(hBr);
     return 0;
 }

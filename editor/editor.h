@@ -5,7 +5,7 @@
 
 #include "menu.h"
 
-/* Representation methods */
+/* Render mode */
 typedef enum
 {
     VIEW = MENU_VIEW,
@@ -13,10 +13,10 @@ typedef enum
 } MODE;
 
 typedef struct tagTEXTDATA {
-    char *text;
-    int *strOffsets;
-    int strCount;
-    int maxStrWidth;
+    char *text;         /* text to output*/
+    int *strOffsets;    /* strings offsets */
+    int strCount;       /* string count */
+    int maxStrWidth;    /* width of the widest string */
 } TEXTDATA;
 
 typedef struct tagTEXTRNDDATA {

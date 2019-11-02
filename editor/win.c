@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include "win.h"
 
-BOOL initWnd(
-             HINSTANCE hInst, LPSTR lpszArgument,
-             int nCmdShow, WNDPROC wndProc )
+BOOL initWnd( HINSTANCE hInst, LPSTR lpszArgument,
+              int nCmdShow, WNDPROC wndProc, HBRUSH *hBr )
 {
     HWND hWnd;               /* This is the handle for our window */
     WNDCLASSEX wincl;// = {0};        /* Data structure for the windowclass */
@@ -25,9 +24,8 @@ BOOL initWnd(
     wincl.cbWndExtra = 0;                      /* structure or the window instance */
     /* Use Windows's default colour as the background of the window */
 
-    HBRUSH hBr = CreateSolidBrush(RGB(0, 0, 255));
-    wincl.hbrBackground = hBr;
-
+    *hBr = CreateSolidBrush(RGB(0, 0, 255));
+    wincl.hbrBackground = *hBr;
     /* Register the window class, and if it fails quit the program */
     if (!RegisterClassEx (&wincl))
         return FALSE;
@@ -62,7 +60,7 @@ BOOL initWnd(
     return TRUE;
 }
 
-int runMsgLoop( void )
+int runMsgLoop( HBRUSH hBr )
 {
     MSG msg;
     /* Run the message loop. It will run until GetMessage() returns 0 */
@@ -73,6 +71,8 @@ int runMsgLoop( void )
         /* Send message to WindowProcedure */
         DispatchMessage(&msg);
     }
+
+    DeleteObject((HGDIOBJ)hBr);
 
     /* The program return-value is 0 - The value that PostQuitMessage() gave */
     return msg.wParam;

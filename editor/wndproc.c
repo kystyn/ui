@@ -415,7 +415,7 @@ LRESULT CALLBACK WindowProcedure( HWND hWnd, UINT message, WPARAM wParam, LPARAM
         case MENU_OPEN:
             GetOpenFileName(&ofn);
             if (!readFile(ofn.lpstrFile, &td))
-                MessageBox(hWnd, "File is not found", NULL, MB_OK);
+                MessageBox(hWnd, "File is not found or no memory", NULL, MB_OK);
             Reboot(hWnd, &trd);
             invalidateScreen(hWnd, &trd, &tm);
             break;
