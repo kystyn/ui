@@ -38,7 +38,7 @@ BOOL initWnd(
     hWnd = CreateWindowEx (
            0,                   /* Extended possibilites for variation */
            szClassName,         /* Classname */
-           "Kystyn vim",       /* Title Text */
+           "Kystyn editor",     /* Title Text */
            WS_OVERLAPPEDWINDOW |
            WS_VSCROLL |
            WS_HSCROLL, /* default window */

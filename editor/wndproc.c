@@ -3,6 +3,14 @@
 #include "wndproc.h"
 #include "utils.h"
 
+/* Reboot file function.
+ * ARGUMENTS:
+ *   - window handler:
+ *       HWND hWnd;
+ *   - render representation:
+ *       TEXTRNDDATA *trd;
+ * RETURNS: None.
+ */
 void Reboot( HWND hWnd, TEXTRNDDATA *trd )
 {
     trd->curLineInStr = 0;
@@ -13,6 +21,20 @@ void Reboot( HWND hWnd, TEXTRNDDATA *trd )
     SetScrollPos(hWnd, SB_VERT, 0, TRUE);
 }
 
+/* WM_PAINT callback function.
+ * ARGUMENTS:
+ *   - window handler:
+ *       HWND hWnd;
+ *   - text representation:
+ *       TEXTDATA *td;
+ *   - render representation:
+ *       TEXTRNDDATA *trd;
+ *   - text metrics:
+ *       TEXTMETRIC *tm;
+ *   - mode:
+ *       MODE m;
+ * RETURNS: None.
+ */
 void OnPaint( HWND hWnd, TEXTDATA *td, TEXTRNDDATA *trd, TEXTMETRIC *tm, MODE m )
 {
     int i;
@@ -52,6 +74,20 @@ void OnPaint( HWND hWnd, TEXTDATA *td, TEXTRNDDATA *trd, TEXTMETRIC *tm, MODE m 
     EndPaint(hWnd, &ps);
 }
 
+/* WM_SIZE callback function.
+ * ARGUMENTS:
+ *   - window handler:
+ *       HWND hWnd;
+ *   - render representation:
+ *       TEXTRNDDATA *trd;
+ *   - text metrics:
+ *       TEXTMETRIC *tm;
+ *   - new window metrics:
+ *       int newW, newH;
+ *   - mode:
+ *       MODE m;
+ * RETURNS: None.
+ */
 void OnSize( HWND hWnd, TEXTRNDDATA *trd, TEXTMETRIC *tm, int newW, int newH, MODE m )
 {
     int
@@ -82,9 +118,23 @@ void OnSize( HWND hWnd, TEXTRNDDATA *trd, TEXTMETRIC *tm, int newW, int newH, MO
         invalidateScreen(hWnd, trd, tm);
 }
 
+/* WM_KEYDOWN callback function.
+ * ARGUMENTS:
+ *   - window handler:
+ *       HWND hWnd;
+ *   - text representation:
+ *       TEXTDATA *td;
+ *   - render representation:
+ *       TEXTRNDDATA *trd;
+ *   - text metrics:
+ *       TEXTMETRIC *tm;
+ *   - mode:
+ *       MODE m;
+ * RETURNS: None.
+ */
 void OnKeyDown( HWND hWnd, WPARAM wParam,
-               TEXTDATA *td,
-               TEXTRNDDATA *trd, TEXTMETRIC *tm, MODE m )
+                TEXTDATA *td,
+                TEXTRNDDATA *trd, TEXTMETRIC *tm, MODE m )
 {
     int minScroll, maxScroll;
     GetScrollRange(hWnd, SB_VERT, &minScroll, &maxScroll);
@@ -154,6 +204,22 @@ void OnKeyDown( HWND hWnd, WPARAM wParam,
     SetScrollPos(hWnd, SB_HORZ, textWidthToHScroll(td, trd, minScroll, maxScroll), TRUE);
 }
 
+/* WM_SCROLL->VSCROLL callback function.
+ * ARGUMENTS:
+ *   - window handler:
+ *       HWND hWnd;
+ *   - HIWORD^-1(scroll position):
+ *       WPARAM wParam;
+ *   - text representation:
+ *       TEXTDATA *td;
+ *   - render representation:
+ *       TEXTRNDDATA *trd;
+ *   - text metrics:
+ *       TEXTMETRIC *tm;
+ *   - mode:
+ *       MODE m;
+ * RETURNS: None.
+ */
 void OnVScroll( HWND hWnd, WPARAM wParam, TEXTDATA *td, TEXTRNDDATA *trd, TEXTMETRIC *tm, MODE m )
 {
     int minScroll, maxScroll;
@@ -200,6 +266,22 @@ void OnVScroll( HWND hWnd, WPARAM wParam, TEXTDATA *td, TEXTRNDDATA *trd, TEXTME
     }
 }
 
+/* WM_SCROLL->HSCROLL callback function.
+ * ARGUMENTS:
+ *   - window handler:
+ *       HWND hWnd;
+ *   - HIWORD^-1(scroll position):
+ *       WPARAM wParam;
+ *   - text representation:
+ *       TEXTDATA *td;
+ *   - render representation:
+ *       TEXTRNDDATA *trd;
+ *   - text metrics:
+ *       TEXTMETRIC *tm;
+ *   - mode:
+ *       MODE m;
+ * RETURNS: None.
+ */
 void OnHScroll( HWND hWnd, WPARAM wParam, TEXTDATA *td, TEXTRNDDATA *trd, TEXTMETRIC *tm, MODE m )
 {
     int minScroll, maxScroll;
