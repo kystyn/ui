@@ -5,7 +5,9 @@
 
 /* Initialize window function.
  * ARGUMENTS:
+ *   IN:
  *   - standard WinMain arguments.
+ *   OUT:
  *   - new brush:
  *       HBRUSH *hBr;
  * RETURNS:
@@ -16,6 +18,7 @@ BOOL initWnd( HINSTANCE hInst, LPSTR lpszArgument,
 
 /* Run message loop function.
  * ARGUMENTS:
+ *   IN:
  *   - background brush to delete in the end:
  *       HBRUSH hBr;
  * RETURNS:

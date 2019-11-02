@@ -5,8 +5,10 @@
 
 /* Reboot file function.
  * ARGUMENTS:
+ *   IN:
  *   - window handler:
  *       HWND hWnd;
+ *   OUT:
  *   - render representation:
  *       TEXTRNDDATA *trd;
  * RETURNS: None.
@@ -23,6 +25,7 @@ void Reboot( HWND hWnd, TEXTRNDDATA *trd )
 
 /* WM_PAINT callback function.
  * ARGUMENTS:
+ *   IN:
  *   - window handler:
  *       HWND hWnd;
  *   - text representation:
@@ -76,10 +79,13 @@ void OnPaint( HWND hWnd, TEXTDATA *td, TEXTRNDDATA *trd, TEXTMETRIC *tm, MODE m 
 
 /* WM_SIZE callback function.
  * ARGUMENTS:
+ *   IN:
  *   - window handler:
  *       HWND hWnd;
+ *   INOUT:
  *   - render representation:
  *       TEXTRNDDATA *trd;
+ *   IN:
  *   - text metrics:
  *       TEXTMETRIC *tm;
  *   - new window metrics:
@@ -120,12 +126,15 @@ void OnSize( HWND hWnd, TEXTRNDDATA *trd, TEXTMETRIC *tm, int newW, int newH, MO
 
 /* WM_KEYDOWN callback function.
  * ARGUMENTS:
+ *   IN:
  *   - window handler:
  *       HWND hWnd;
  *   - text representation:
  *       TEXTDATA *td;
+ *   INOUT:
  *   - render representation:
  *       TEXTRNDDATA *trd;
+ *   IN:
  *   - text metrics:
  *       TEXTMETRIC *tm;
  *   - mode:
@@ -206,14 +215,17 @@ void OnKeyDown( HWND hWnd, WPARAM wParam,
 
 /* WM_SCROLL->VSCROLL callback function.
  * ARGUMENTS:
+ *   IN:
  *   - window handler:
  *       HWND hWnd;
- *   - HIWORD^-1(scroll position):
+ *   - scroll position:
  *       WPARAM wParam;
  *   - text representation:
  *       TEXTDATA *td;
+ *   INOUT:
  *   - render representation:
  *       TEXTRNDDATA *trd;
+ *   IN:
  *   - text metrics:
  *       TEXTMETRIC *tm;
  *   - mode:
@@ -268,14 +280,17 @@ void OnVScroll( HWND hWnd, WPARAM wParam, TEXTDATA *td, TEXTRNDDATA *trd, TEXTME
 
 /* WM_SCROLL->HSCROLL callback function.
  * ARGUMENTS:
+ *   IN:
  *   - window handler:
  *       HWND hWnd;
- *   - HIWORD^-1(scroll position):
+ *   - scroll position:
  *       WPARAM wParam;
  *   - text representation:
  *       TEXTDATA *td;
+ *   INOUT:
  *   - render representation:
  *       TEXTRNDDATA *trd;
+ *   IN:
  *   - text metrics:
  *       TEXTMETRIC *tm;
  *   - mode:
@@ -322,16 +337,16 @@ LRESULT CALLBACK WindowProcedure( HWND hWnd, UINT message, WPARAM wParam, LPARAM
     static int minScroll = 0, maxScroll = 2000;
     static int fontSize = 26;
     static MODE m = VIEW;
+    static OPENFILENAME ofn = {0};
 
     char szFile[100];
 
     HDC hDC;
     HMENU hMenu;
-    static OPENFILENAME ofn = {0};
     ofn.lStructSize = sizeof(ofn);
     ofn.hwndOwner = hWnd;
     ofn.lpstrFile = szFile ;
-    ofn.nMaxFile = sizeof( szFile );
+    ofn.nMaxFile = sizeof(szFile);
     ofn.lpstrFilter = "All\0*.*\0Text\0*.TXT\0";
     ofn.nFilterIndex = 1;
     ofn.lpstrFileTitle = NULL ;

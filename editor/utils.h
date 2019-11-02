@@ -5,10 +5,12 @@
 
 /* Move text with controls functions group.
  * ARGUMENTS:
+ *  IN:
  *   - mode:
  *       MODE m;
  *   - text representation:
  *       TEXTDATA *td;
+ *  INOUT:
  *   - render representation:
  *       TEXTRNDDATA *trd;
  * RETURNS: None.
@@ -20,6 +22,7 @@ void PageDown( MODE m, TEXTDATA *td, TEXTRNDDATA *trd );
 
 /* Mapping from text representation to scroll space functions group.
  * ARGUMENTS:
+ *   IN:
  *   - text representation:
  *       TEXTDATA *td;
  *   - render representation:
@@ -34,11 +37,12 @@ int textHeightToVScroll( TEXTDATA *td, TEXTRNDDATA *trd, int minScroll, int maxS
 
 /* Inverse mapping functions group.
  * ARGUMENTS:
+ *   IN:
  *   - text representation:
  *       TEXTDATA *td;
  *   - render representation:
  *       TEXTRNDDATA *trd;
- *   - current scroll postions:
+ *   - current scroll positions:
  *        int scrollPos;
  *   - scroll limits:
  *       int minScroll, maxScroll;
@@ -50,6 +54,7 @@ int vScrollToTextHeight( int endYLeftUp, int scrollPos, int minScroll, int maxSc
 
 /* Invalidate screen function.
  * ARGUMENTS:
+ *   IN:
  *   - window handler:
  *       HWND hWnd;
  *   - text representation:
