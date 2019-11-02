@@ -153,7 +153,9 @@ void OnKeyDown( HWND hWnd, WPARAM wParam,
     case VK_RIGHT:
         if (m == LAYOUT)
             break;
-        trd->xLeftUp = min(trd->xLeftUp + 1, td->maxStrWidth - trd->symsPerW - 1);
+        trd->xLeftUp =
+            (td->maxStrWidth - trd->symsPerW - 1 > 0) *
+            min(trd->xLeftUp + 1, td->maxStrWidth - trd->symsPerW - 1);
         invalidateScreen(hWnd, trd, tm);
         break;
     case VK_LEFT:
@@ -315,7 +317,9 @@ void OnHScroll( HWND hWnd, WPARAM wParam, TEXTDATA *td, TEXTRNDDATA *trd, TEXTME
         SetScrollPos(hWnd, SB_HORZ, textWidthToHScroll(td, trd, minScroll, maxScroll), TRUE);
         break;
     case SB_LINEDOWN:
-        trd->xLeftUp = min(td->maxStrWidth - 1 - trd->symsPerW, trd->xLeftUp + 1);
+        trd->xLeftUp =
+            (td->maxStrWidth - trd->symsPerW - 1 > 0) *
+            min(trd->xLeftUp + 1, td->maxStrWidth - trd->symsPerW - 1);
         invalidateScreen(hWnd, trd, tm);
         SetScrollPos(hWnd, SB_HORZ, textWidthToHScroll(td, trd, minScroll, maxScroll), TRUE);
         break;

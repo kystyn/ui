@@ -24,8 +24,7 @@ int hScrollToTextWidth( TEXTDATA *td, TEXTRNDDATA *trd, int scrollPos, int minSc
             return (float)(scrollPos - minScroll) / (maxScroll - minScroll) *
                 (td->maxStrWidth - trd->symsPerW - 1);
 
-    return (float)(scrollPos - minScroll) / (maxScroll - minScroll) *
-        (trd->symsPerW - 1);
+    return 0;
 }
 
 int vScrollToTextHeight( int endYLeftUp, int scrollPos, int minScroll, int maxScroll )
