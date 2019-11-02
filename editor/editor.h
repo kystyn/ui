@@ -27,13 +27,67 @@ typedef struct tagTEXTRNDDATA {
                              */
 } TEXTRNDDATA;
 
+/* Read file functions.
+ * ARGUMENTS:
+ *   - file name:
+ *       char const *name;
+ *   - text representation:
+ *       TEXTDATA *data;
+ * RETURNS:
+ *   (BOOL) TRUE if success, FALSE otherwise.
+ */
 BOOL readFile( char const *name, TEXTDATA *data );
+
+/* Find width of the widest string in text function.
+ * ARGUMENTS:
+ *   - text representation:
+ *       TEXTDATA *data;
+ *   - edges of searching space:
+ *       int yStart, yEnd;
+ * RETURNS:
+ *   (int) width of the widest string.
+ */
 int findMaxStrWidth( TEXTDATA *td, int yStart, int yEnd );
+
+/* Free memory function.
+ * ARGUMENTS:
+ *   - text representation:
+ *       TEXTDATA *data;
+ * RETURNS: None.
+ */
 void freeTextData( TEXTDATA *td );
 
-/* number - number of string in document */
+/* Find string length in bytes function.
+ * ARGUMENTS:
+ *   - text representation:
+ *       TEXTDATA *data;
+ *   - string number:
+ *       int number;
+ * RETURNS:
+ *   (int) string length.
+ */
 int strByteLength( TEXTDATA *td, int number );
+
+/* Find string length in chars function.
+ * ARGUMENTS:
+ *   - text representation:
+ *       TEXTDATA *data;
+ *   - string number:
+ *       int number;
+ * RETURNS:
+ *   (int) string length.
+ */
 int strTextLength( TEXTDATA *td, int number );
+
+/* Count of lines to be rendered in LAYOUT mode.
+ * ARGUMENTS:
+ *   - length of string in chars:
+ *       int strTL;
+ *   - text render representation:
+ *       TEXTRNDDATA *trd;
+ * RETURNS:
+ *   (int) count of lines.
+ */
 int linesInCurStr( int strTL, TEXTRNDDATA *trd );
 
 /* find document end method.

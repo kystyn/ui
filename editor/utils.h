@@ -3,7 +3,16 @@
 
 #include "editor.h"
 
-/* Move text with controls methods */
+/* Move text with controls functions family.
+ * ARGUMENTS:
+ *   - mode:
+ *       MODE m;
+ *   - text representation:
+ *       TEXTDATA *td;
+ *   - render representation:
+ *       TEXTRNDDATA *trd;
+ * RETURNS: None.
+ */
 void LineUp( MODE m, TEXTDATA *td, TEXTRNDDATA *trd );
 void LineDown( MODE m, TEXTDATA *td, TEXTRNDDATA *trd );
 void PageUp( MODE m, TEXTDATA *td, TEXTRNDDATA *trd );
