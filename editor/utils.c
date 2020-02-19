@@ -11,8 +11,11 @@ int textWidthToHScroll( TEXTDATA *td, TEXTRNDDATA *trd, int minScroll, int maxSc
 
 int textHeightToVScroll( TEXTDATA *td, TEXTRNDDATA *trd, int minScroll, int maxScroll )
 {
+    if (td->strCount - 1 - trd->symsPerH > 0)
+        return minScroll + trd->yLeftUp * (float)(maxScroll - minScroll) /
+                    (td->strCount - 1 - trd->symsPerH);
     return minScroll + trd->yLeftUp * (float)(maxScroll - minScroll) /
-                 max(td->strCount - 1 - trd->symsPerH, td->strCount - 1);
+                (td->strCount - 1);
 }
 
 int hScrollToTextWidth( TEXTDATA *td, TEXTRNDDATA *trd, int scrollPos, int minScroll, int maxScroll )
@@ -21,8 +24,7 @@ int hScrollToTextWidth( TEXTDATA *td, TEXTRNDDATA *trd, int scrollPos, int minSc
             return (float)(scrollPos - minScroll) / (maxScroll - minScroll) *
                 (td->maxStrWidth - trd->symsPerW - 1);
 
-    return (float)(scrollPos - minScroll) / (maxScroll - minScroll) *
-        (trd->symsPerW - 1);
+    return 0;
 }
 
 int vScrollToTextHeight( int endYLeftUp, int scrollPos, int minScroll, int maxScroll )
