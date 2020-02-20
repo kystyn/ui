@@ -8,7 +8,7 @@ std::ostream & operator<<( std::ostream &os, Rational const &q )
     return os;
 }
 
-Rational::Rational()
+Rational::Rational() : theNumerator(0), theDenumerator(1)
 {
 }
 

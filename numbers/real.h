@@ -7,7 +7,14 @@ class Real
 {
 public:
     Real();
+    Real( Real const &r );
     Real( Rational const &theLeft, Rational const &theRight );
+    Real( Rational const &r );
+
+    Real & byCenterAndRadius( Rational const &center,
+                              Rational const & radius );
+
+    Real & operator=( Real const &r );
 
     Real operator+( Real const &r ) const;
     Real operator-( Real const &r ) const;

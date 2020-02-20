@@ -10,24 +10,49 @@ T1 min( T1 val1, T2 val2 )
 template<typename T, typename ...Args>
 T min( T val, Args... args )
 {
-    return min(val, args...);
+    return std::min(val, min(args...));
 }
 
 template<typename T, typename ...Args>
 T max( T val, Args... args )
 {
-    return -max(-val, (-args)...);
+    return -min(-val, (-args)...);
 }
 
-Real::Real()
+Real::Real() : theLeft(0), theRight(0)
 {
+}
 
+Real::Real( const Real &r ) :
+    theLeft(r.theLeft), theRight(r.theRight)
+{
 }
 
 Real::Real( const Rational &left, const Rational &right ) :
     theLeft(std::min(left, right)),
     theRight(std::max(left, right))
 {
+}
+
+Real::Real( Rational const &r ) : theLeft(r), theRight(r)
+{
+}
+
+Real & Real::byCenterAndRadius( Rational const &center,
+                                Rational const &radius )
+{
+    int sgn = 2 * (radius > Rational(0)) - 1;
+    theLeft = center - Rational(sgn) * radius;
+    theRight = center + Rational(sgn) * radius;
+
+    return *this;
+}
+
+Real & Real::operator=( Real const &r )
+{
+    theLeft = r.theLeft;
+    theRight = r.theRight;
+    return *this;
 }
 
 Real Real::operator+( Real const &r ) const
@@ -120,7 +145,7 @@ bool Real::operator<( Real const &q ) const
 
 bool Real::operator<=( Real const &q ) const
 {
-    return theLeft <= q.theLeft && q.theLeft <= theRight;
+    return *this < q || *this == q;
 }
 
 bool Real::operator>( Real const &q ) const
@@ -128,16 +153,16 @@ bool Real::operator>( Real const &q ) const
     return theLeft > q.theRight;
 }
 
-// think about <=, >=, ==
-
 bool Real::operator>=( Real const &q ) const
 {
-    return theRight >= q.theRight;
+    return *this > q || *this == q;
 }
 
 bool Real::operator==( Real const &q ) const
 {
-    return *this <= q && *this >= q;
+    return
+            q.theLeft <= theRight ||
+            theLeft <= q.theRight;
 }
 
 Real::operator float( void ) const
