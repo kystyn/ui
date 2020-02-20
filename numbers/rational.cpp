@@ -17,6 +17,20 @@ Rational::Rational( int64_t numerator, uint64_t denumerator ) :
 {
 }
 
+Rational::Rational( Rational const &q )
+{
+    theNumerator = q.theNumerator;
+    theDenumerator = q.theDenumerator;
+}
+
+Rational & Rational::operator=( const Rational &q )
+{
+    theNumerator = q.theNumerator;
+    theDenumerator = q.theDenumerator;
+
+    return *this;
+}
+
 void Rational::add( Rational const &q, int64_t &num, uint64_t &denum ) const
 {
     num = theNumerator * int64_t(q.theDenumerator) +
@@ -101,6 +115,11 @@ Rational Rational::operator/( Rational const &q ) const
     return Rational(num, denum);
 }
 
+Rational Rational::operator-() const
+{
+    return Rational(-theNumerator, theDenumerator);
+}
+
 Rational & Rational::operator+=( Rational const &q )
 {
     int64_t num;
@@ -147,6 +166,31 @@ Rational & Rational::operator/=( Rational const &q )
     theDenumerator = denum;
 
     return *this;
+}
+
+bool Rational::operator<( Rational const &q ) const
+{
+    return (*this - q).theNumerator < 0;
+}
+
+bool Rational::operator<=( Rational const &q ) const
+{
+    return (*this - q).theNumerator <= 0;
+}
+
+bool Rational::operator>( Rational const &q ) const
+{
+    return (*this - q).theNumerator > 0;
+}
+
+bool Rational::operator>=( Rational const &q ) const
+{
+    return (*this - q).theNumerator >= 0;
+}
+
+bool Rational::operator==( Rational const &q ) const
+{
+    return theNumerator == q.theNumerator && theDenumerator == q.theDenumerator;
 }
 
 Rational::operator float( void ) const

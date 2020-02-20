@@ -9,17 +9,27 @@ class Rational
 public:
     Rational();
 
-    Rational( int64_t theNumerator, uint64_t theDenumerator );
+    Rational( int64_t theNumerator, uint64_t theDenumerator = 1 );
+    Rational( Rational const &q );
+    Rational & operator=( Rational const &q );
 
     Rational operator+( Rational const &q ) const;
     Rational operator-( Rational const &q ) const;
     Rational operator*( Rational const &q ) const;
     Rational operator/( Rational const &q ) const;
 
+    Rational operator-( void ) const;
+
     Rational & operator+=( Rational const &q );
     Rational & operator-=( Rational const &q );
     Rational & operator*=( Rational const &q );
     Rational & operator/=( Rational const &q );
+
+    bool operator<( Rational const &q ) const;
+    bool operator<=( Rational const &q ) const;
+    bool operator>( Rational const &q ) const;
+    bool operator>=( Rational const &q ) const;
+    bool operator==( Rational const &q ) const;
 
     operator float( void ) const;
     operator double( void ) const;
