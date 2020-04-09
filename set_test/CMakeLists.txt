@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(set LANGUAGES CXX)
+project(set_test LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_library(set SHARED set_impl.cpp ISet.h)
+add_executable(set_test main.cpp)

@@ -13,7 +13,7 @@ public:
         NORM_INF
     };
     static IVector* createVector(size_t dim, double* pData, ILogger* pLogger);
-    virtual ~IVector() = 0;
+    virtual ~IVector() = default;
     virtual IVector* clone() const = 0;
     static IVector* add(IVector const* pOperand1, IVector const* pOperand2, ILogger* pLogger);
     static IVector* sub(IVector const* pOperand1, IVector const* pOperand2, ILogger* pLogger);
