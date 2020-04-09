@@ -5,6 +5,7 @@
 
 int main()
 {
+    /*
     Rational
             q1(-1, 2),
             q2(-3, 4);
@@ -27,5 +28,7 @@ int main()
 
     Real r;
     r.byCenterAndRadius({2, 5}, {3, 100});
+    */
+
     return 0;
 }

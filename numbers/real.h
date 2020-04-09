@@ -33,6 +33,7 @@ public:
     bool operator>( Real const &q ) const;
     bool operator>=( Real const &q ) const;
     bool operator==( Real const &q ) const;
+    bool operator!=( Real const &q ) const;
 
     operator float( void ) const;
     operator double( void ) const;

@@ -165,6 +165,11 @@ bool Real::operator==( Real const &q ) const
             theLeft <= q.theRight;
 }
 
+bool Real::operator!=( const Real &q ) const
+{
+    return !(*this == q);
+}
+
 Real::operator float( void ) const
 {
     return float((theLeft + theRight) / Rational(2));

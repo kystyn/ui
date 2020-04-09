@@ -32,7 +32,6 @@ qrc_*.cpp
 Thumbs.db
 *.res
 *.rc
-*.rar
 /.qmake.cache
 /.qmake.stash
 
