@@ -12,6 +12,11 @@ public:
         std::set<void*>::iterator it;
         if ((it = clients.find(pClient)) != clients.end())
             clients.erase(it);
+
+        if (clients.empty()) {
+            logStream.close();
+            delete instance;
+        }
     }
 
     void log( char const* pMsg, RESULT_CODE err ) override
@@ -61,7 +66,7 @@ public:
 
     RESULT_CODE setLogFile( char const* pLogFile ) override
     {
-        logStream.open(pLogFile, std::ios_base::out);
+        logStream.open(pLogFile, std::ofstream::out);
         if (logStream.is_open())
             return RESULT_CODE::SUCCESS;
         return RESULT_CODE::FILE_ERROR;

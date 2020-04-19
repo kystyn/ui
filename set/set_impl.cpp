@@ -19,6 +19,13 @@ public:
     {
         IVector *diff;
 
+        if (!elements.empty())
+            if (pVector->getDim() != getDim())
+            {
+                pLogger->log("In Set::insert", RESULT_CODE::WRONG_DIM);
+                return RESULT_CODE::WRONG_DIM;
+            }
+
         for (auto elem: elements)
         {
             diff = IVector::sub(pVector, elem, pLogger);
@@ -30,13 +37,6 @@ public:
                 return RESULT_CODE::MULTIPLE_DEFINITION;
             }
         }
-
-        if (!elements.empty())
-            if (pVector->getDim() != getDim())
-            {
-                pLogger->log("In Set::insert", RESULT_CODE::WRONG_DIM);
-                return RESULT_CODE::WRONG_DIM;
-            }
 
         elements.push_back(pVector);
         return RESULT_CODE::SUCCESS;
@@ -219,10 +219,10 @@ ISet * ISet::sub( ISet const* pOperand1, ISet const* pOperand2, IVector::NORM no
         return nullptr;
 
     IVector *elem, *elemFound;
-    for (size_t i = 0; i < pOperand2->getSize(); i++)
+    for (size_t i = 0; i < pOperand1->getSize(); i++)
     {
-        pOperand2->get(elem, i); // guaranteed ok
-        auto rc = pOperand1->get(elemFound, elem, norm, tolerance);
+        pOperand1->get(elem, i); // guaranteed ok
+        auto rc = pOperand2->get(elemFound, elem, norm, tolerance);
         if (rc == RESULT_CODE::NOT_FOUND)
             diff->insert(elem, norm, tolerance);
     }

@@ -7,11 +7,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(${PROJECT_NAME} main.cpp)
 
-find_library(LIBS_FOUND vector logger HINTS ../lib)
+find_library(LVECTOR_FOUND NAME vector PATHS ../lib)
+find_library(LLOGGER_FOUND NAME logger PATHS ../lib)
 
-if (NOT LIBS_FOUND)
+if (NOT LVECTOR_FOUND OR NOT LLOGGER_FOUND)
 	message(SEND_ERROR "Libraries not found")
 	return()
 else ()
-	target_link_libraries(${PROJECT_NAME} PUBLIC ${LIBS_FOUND_LIBRARIES})
+	target_link_libraries(${PROJECT_NAME} PUBLIC ${LVECTOR_FOUND} ${LLOGGER_FOUND})
 endif()
