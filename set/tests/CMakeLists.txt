@@ -5,11 +5,11 @@ project(set_test LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(${PROJECT_NAME} main.cpp)
+add_executable(${PROJECT_NAME} src/main.cpp)
 
-find_library(LLOGGER_FOUND NAMES logger PATHS ../lib)
-find_library(LVECTOR_FOUND NAMES vector PATHS ../lib)
-find_library(LSET_FOUND NAMES set PATHS ../lib)
+find_library(LLOGGER_FOUND NAMES logger PATHS libs)
+find_library(LVECTOR_FOUND NAMES vector PATHS libs)
+find_library(LSET_FOUND NAMES set PATHS libs)
 
 if (NOT LVECTOR_FOUND OR NOT LLOGGER_FOUND OR NOT LSET_FOUND)
 	message(SEND_ERROR "Libraries not found")

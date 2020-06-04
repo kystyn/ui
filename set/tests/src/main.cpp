@@ -1,5 +1,5 @@
 #include <iostream>
-#include "ISet.h"
+#include "../include/ISet.h"
 
 void print( ISet *set )
 {
