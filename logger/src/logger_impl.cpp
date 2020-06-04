@@ -1,12 +1,19 @@
+#include <cstdio>
 #include <set>
 #include <fstream>
-#include "ILogger.h"
+#include "../include/ILogger.h"
 
 namespace  {
-#pragma pack(push, 1)
 class LoggerImpl : public ILogger
 {
 public:
+    LoggerImpl()
+    {
+        logStream = fopen("log.txt", "w");
+        if (logStream == nullptr)
+            fprintf(stderr, "Couldn' create log.txt");
+    }
+
     void destroyLogger(void* pClient) override
     {
         std::set<void*>::iterator it;
@@ -14,8 +21,9 @@ public:
             clients.erase(it);
 
         if (clients.empty()) {
-            logStream.close();
+            fclose(logStream);
             delete instance;
+            instance = nullptr;
         }
     }
 
@@ -61,13 +69,14 @@ public:
             headMsg = "ERROR: MULTIPLE DEFINITION: ";
             break;
         }
-        logStream << headMsg << pMsg << "\n";
+        fprintf(logStream, "%s%s\n", headMsg, pMsg);
     }
 
     RESULT_CODE setLogFile( char const* pLogFile ) override
     {
-        logStream.open(pLogFile, std::ofstream::out);
-        if (logStream.is_open())
+        fclose(logStream);
+        logStream = fopen(pLogFile, "w");
+        if (logStream != nullptr)
             return RESULT_CODE::SUCCESS;
         return RESULT_CODE::FILE_ERROR;
     }
@@ -90,9 +99,8 @@ protected:
 private:
     static LoggerImpl *instance;
     std::set<void *> clients;
-    std::ofstream logStream;
+    FILE *logStream;
 };
-#pragma pack(pop)
 
 LoggerImpl *LoggerImpl::instance = new LoggerImpl();
 }
@@ -100,6 +108,10 @@ LoggerImpl *LoggerImpl::instance = new LoggerImpl();
 ILogger * ILogger::createLogger( void* pClient )
 {
     auto logger = LoggerImpl::getInstance();
+
+    if (logger == nullptr)
+        logger = new LoggerImpl();
+
     logger->addClient(pClient);
     return logger;
 }

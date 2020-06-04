@@ -22,7 +22,8 @@ public:
         if (!elements.empty())
             if (pVector->getDim() != getDim())
             {
-                pLogger->log("In Set::insert", RESULT_CODE::WRONG_DIM);
+		if (pLogger != nullptr)
+	            pLogger->log("In Set::insert", RESULT_CODE::WRONG_DIM);
                 return RESULT_CODE::WRONG_DIM;
             }
 
@@ -33,7 +34,8 @@ public:
                 continue;
             if (diff->norm(norm) < tolerance)
             {
-                pLogger->log("In Set::insert", RESULT_CODE::MULTIPLE_DEFINITION);
+ 		if (pLogger != nullptr)
+                    pLogger->log("In Set::insert", RESULT_CODE::MULTIPLE_DEFINITION);
                 return RESULT_CODE::MULTIPLE_DEFINITION;
             }
         }
@@ -46,7 +48,8 @@ public:
     {
         if (index >= elements.size())
         {
-            pLogger->log("In Set::get", RESULT_CODE::OUT_OF_BOUNDS);
+            if (pLogger != nullptr)
+                pLogger->log("In Set::get", RESULT_CODE::OUT_OF_BOUNDS);
             return RESULT_CODE::OUT_OF_BOUNDS;
         }
 
@@ -69,7 +72,8 @@ public:
                 return RESULT_CODE::SUCCESS;
             }
         }
-        pLogger->log("In Set::get", RESULT_CODE::NOT_FOUND);
+	if (pLogger != nullptr)		
+            pLogger->log("In Set::get", RESULT_CODE::NOT_FOUND);
         if (diff != nullptr)
             delete diff;
         return RESULT_CODE::NOT_FOUND;
@@ -98,7 +102,8 @@ public:
     {
         if (index >= elements.size())
         {
-            pLogger->log("In Set::erase", RESULT_CODE::NOT_FOUND);
+	    if (pLogger != nullptr)
+                pLogger->log("In Set::erase", RESULT_CODE::NOT_FOUND);
             return RESULT_CODE::NOT_FOUND;
         }
         auto itToDel = elements.begin() + index;
@@ -128,7 +133,8 @@ public:
         }
         if (diff != nullptr)
             delete diff;
-        pLogger->log("In Set::erase", RESULT_CODE::NOT_FOUND);
+	if (pLogger != nullptr)
+            pLogger->log("In Set::erase", RESULT_CODE::NOT_FOUND);
         return RESULT_CODE::NOT_FOUND;
     }
 
@@ -137,7 +143,8 @@ public:
         SetImpl *set = new SetImpl(pLogger);
         if (set == nullptr)
         {
-            pLogger->log("In Set::clone", RESULT_CODE::OUT_OF_MEMORY);
+	    if (pLogger != nullptr)
+                pLogger->log("In Set::clone", RESULT_CODE::OUT_OF_MEMORY);
             return nullptr;
         }
 
@@ -172,7 +179,8 @@ ISet * ISet::add( ISet const* pOperand1, ISet const* pOperand2, IVector::NORM no
 {
     if (pOperand1 == nullptr && pOperand2 == nullptr)
     {
-        pLogger->log("Set::add: Both operands null", RESULT_CODE::BAD_REFERENCE);
+	if (pLogger != nullptr)
+            pLogger->log("Set::add: Both operands null", RESULT_CODE::BAD_REFERENCE);
         return nullptr;
     }
 
@@ -198,7 +206,8 @@ ISet * ISet::intersect( ISet const* pOperand1, ISet const* pOperand2, IVector::N
 {
     if (pOperand1 == nullptr || pOperand2 == nullptr)
     {
-        pLogger->log("Set::intersect: some of operands is null", RESULT_CODE::BAD_REFERENCE);
+        if (pLogger != nullptr)
+            pLogger->log("Set::intersect: some of operands is null", RESULT_CODE::BAD_REFERENCE);
         return nullptr;
     }
 
@@ -223,7 +232,8 @@ ISet * ISet::sub( ISet const* pOperand1, ISet const* pOperand2, IVector::NORM no
 {
     if (pOperand1 == nullptr)
     {
-        pLogger->log("Set::subtract: operand is null", RESULT_CODE::BAD_REFERENCE);
+	if (pLogger != nullptr)
+            pLogger->log("Set::subtract: operand is null", RESULT_CODE::BAD_REFERENCE);
         return nullptr;
     }
 

@@ -277,7 +277,10 @@ private:
 
 ICompact * createCompact(IVector const* const begin, IVector const* const end, ILogger*logger)
 {
-    if (!isValidData(begin, end) || logger == nullptr)
+    if (logger == nullptr)
+	std::cerr << "No logger mentioned\n";
+
+    if (!isValidData(begin, end))
     {
         logger->log("createCompact: null param or vector dimension mismatch", RESULT_CODE::BAD_REFERENCE);
         return nullptr;
@@ -292,13 +295,13 @@ ICompact * createCompact(IVector const* const begin, IVector const* const end, I
 
     // always should: begin < end!
     if (lessBegEnd)
-        return new CompactImpl(const_cast<IVector *>(begin), const_cast<IVector *>(end), logger);
-    return new CompactImpl(const_cast<IVector *>(end), const_cast<IVector *>(begin), logger);
+        return new (std::nothrow) CompactImpl(const_cast<IVector *>(begin), const_cast<IVector *>(end), logger);
+    return new (std::nothrow) CompactImpl(const_cast<IVector *>(end), const_cast<IVector *>(begin), logger);
 }
 
 ICompact * intersection(ICompact const* const left, ICompact const* const right, ILogger* logger)
 {
-    if (!isValidData(left, right) || logger == nullptr)
+    if (!isValidData(left, right))
     {
         logger->log("intersection: null param or dimension mismatch", RESULT_CODE::BAD_REFERENCE);
         return nullptr;

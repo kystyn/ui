@@ -2,13 +2,13 @@ cmake_minimum_required(VERSION 3.4)
 
 project(vector_test LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(${PROJECT_NAME} main.cpp)
+add_executable(${PROJECT_NAME} src/main.cpp)
 
-find_library(LVECTOR_FOUND NAME vector PATHS ../lib)
-find_library(LLOGGER_FOUND NAME logger PATHS ../lib)
+find_library(LVECTOR_FOUND NAME vector PATHS libs)
+find_library(LLOGGER_FOUND NAME logger PATHS libs)
 
 if (NOT LVECTOR_FOUND OR NOT LLOGGER_FOUND)
 	message(SEND_ERROR "Libraries not found")

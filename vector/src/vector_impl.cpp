@@ -3,12 +3,9 @@
 #include <memory>
 #include <iostream>
 #include <limits>
-#include "IVector.h"
-
-// develop on UNIX => no __declspec
+#include "../include/IVector.h"
 
 namespace  {
-#pragma pack(push, 1)
 class VectorImpl : public IVector
 {
 public:
@@ -83,21 +80,15 @@ private:
     ILogger *logger;
     size_t dim;
 };
-#pragma pack(pop)
 }
 
 IVector * IVector::createVector(size_t dim, double* pData, ILogger *logger)
 {
-    if (logger == nullptr)
-    {
-        std::cerr << "No logger mentioned\n";
-        return nullptr;
-    }
-
     for (size_t i = 0; i < dim; ++i)
         if (std::isnan(pData[i]))
         {
-            logger->log((std::to_string(i) + " component ").c_str(), RESULT_CODE::NAN_VALUE);
+            if (logger != nullptr)
+                logger->log((std::to_string(i) + " component ").c_str(), RESULT_CODE::NAN_VALUE);
             return nullptr;
         }
 
@@ -106,7 +97,8 @@ IVector * IVector::createVector(size_t dim, double* pData, ILogger *logger)
     char *bulk = new (std::nothrow) char[size];
     if (bulk == nullptr)
     {
-        logger->log("Couldn't create bulk", RESULT_CODE::OUT_OF_MEMORY);
+        if (logger != nullptr)
+            logger->log("Couldn't create bulk", RESULT_CODE::OUT_OF_MEMORY);
         return nullptr;
     }
 
@@ -121,13 +113,15 @@ IVector * IVector::add(IVector const* pOperand1, IVector const* pOperand2, ILogg
 {
     if (pOperand1 == nullptr || pOperand2 == nullptr)
     {
-        logger->log("in Vector add", RESULT_CODE::WRONG_ARGUMENT);
+        if (logger != nullptr)
+            logger->log("in Vector add", RESULT_CODE::WRONG_ARGUMENT);
         return nullptr;
     }
 
     if (pOperand1->getDim() != pOperand2->getDim())
     {
-        logger->log("in Vector add", RESULT_CODE::WRONG_DIM);
+        if (logger != nullptr)
+            logger->log("in Vector add", RESULT_CODE::WRONG_DIM);
         return nullptr;
     }
 
@@ -151,13 +145,15 @@ IVector * IVector::sub(IVector const* pOperand1, IVector const* pOperand2, ILogg
 {
     if (pOperand1 == nullptr || pOperand2 == nullptr)
     {
-        logger->log("in Vector subtract", RESULT_CODE::WRONG_ARGUMENT);
+        if (logger != nullptr)
+            logger->log("in Vector subtract", RESULT_CODE::WRONG_ARGUMENT);
         return nullptr;
     }
 
     if (pOperand1->getDim() != pOperand2->getDim())
     {
-        logger->log("in Vector subtract", RESULT_CODE::WRONG_DIM);
+        if (logger != nullptr)
+            logger->log("in Vector subtract", RESULT_CODE::WRONG_DIM);
         return nullptr;
     }
 
@@ -180,7 +176,8 @@ IVector * IVector::mul(IVector const* pOperand1, double scaleParam, ILogger *log
 {
     if (pOperand1 == nullptr)
     {
-        logger->log("in Vector multiply", RESULT_CODE::WRONG_ARGUMENT);
+        if (logger != nullptr)
+            logger->log("in Vector multiply", RESULT_CODE::WRONG_ARGUMENT);
         return nullptr;
     }
 
@@ -203,13 +200,15 @@ double IVector::mul(IVector const* pOperand1, IVector const* pOperand2, ILogger 
 {
     if (pOperand1 == nullptr || pOperand2 == nullptr)
     {
-        logger->log("in Vector multiply", RESULT_CODE::NAN_VALUE);
+        if (logger != nullptr)
+            logger->log("in Vector multiply", RESULT_CODE::NAN_VALUE);
         return std::numeric_limits<double>::quiet_NaN();
     }
 
     if (pOperand1->getDim() != pOperand2->getDim())
     {
-        logger->log("in Vector multiply", RESULT_CODE::WRONG_DIM);
+        if (logger != nullptr)
+            logger->log("in Vector multiply", RESULT_CODE::WRONG_DIM);
         return std::numeric_limits<double>::quiet_NaN();
     }
 
@@ -227,13 +226,15 @@ RESULT_CODE IVector::equals(
 {
     if (pOperand1 == nullptr || pOperand2 == nullptr)
     {
-        pLogger->log("in Vector multiply", RESULT_CODE::NAN_VALUE);
+        if (pLogger != nullptr)
+            pLogger->log("in Vector multiply", RESULT_CODE::NAN_VALUE);
         return RESULT_CODE::NAN_VALUE;
     }
 
     if (pOperand1->getDim() != pOperand2->getDim())
     {
-        pLogger->log("in Vector multiply", RESULT_CODE::WRONG_DIM);
+        if (pLogger != nullptr)
+            pLogger->log("in Vector multiply", RESULT_CODE::WRONG_DIM);
         return RESULT_CODE::WRONG_DIM;
     }
 
