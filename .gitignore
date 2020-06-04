@@ -2,3 +2,7 @@
 build*
 *.odt
 *.so
+doc
+libs
+*.user
+

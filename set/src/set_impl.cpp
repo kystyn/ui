@@ -12,7 +12,7 @@ public:
 
     ~SetImpl() override
     {
-
+        clear();
     }
 
     RESULT_CODE insert( const IVector* pVector, IVector::NORM norm, double tolerance ) override
@@ -38,7 +38,7 @@ public:
             }
         }
 
-        elements.push_back(pVector);
+        elements.push_back(pVector->clone());
         return RESULT_CODE::SUCCESS;
     }
 
@@ -56,7 +56,7 @@ public:
 
     RESULT_CODE get( IVector*& pVector, IVector const* pSample, IVector::NORM norm, double tolerance ) const override
     {
-        IVector *diff;
+        IVector *diff = nullptr;
         for (auto elem: elements)
         {
             diff = IVector::sub(pSample, elem, pLogger);
@@ -65,10 +65,13 @@ public:
             if (diff->norm(norm) < tolerance)
             {
                 pVector = const_cast<IVector *>(elem);
+                delete diff;
                 return RESULT_CODE::SUCCESS;
             }
         }
         pLogger->log("In Set::get", RESULT_CODE::NOT_FOUND);
+        if (diff != nullptr)
+            delete diff;
         return RESULT_CODE::NOT_FOUND;
     }
 
@@ -86,6 +89,8 @@ public:
 
     void clear() override // delete all
     {
+        for (auto &el: elements)
+            delete el;
         elements.clear();
     }
 
@@ -96,13 +101,16 @@ public:
             pLogger->log("In Set::erase", RESULT_CODE::NOT_FOUND);
             return RESULT_CODE::NOT_FOUND;
         }
-        elements.erase(elements.begin() + index);
+        auto itToDel = elements.begin() + index;
+        if (*itToDel != nullptr)
+            delete *itToDel;
+        elements.erase(itToDel);
         return RESULT_CODE::SUCCESS;
     }
 
     RESULT_CODE erase( IVector const* pSample, IVector::NORM norm, double tolerance ) override
     {
-        IVector *diff;
+        IVector *diff = nullptr;
         long searchIdx = 0;
         for (auto elem: elements)
         {
@@ -111,11 +119,15 @@ public:
                 continue;
             if (diff->norm(norm) < tolerance)
             {
+                delete diff;
+                delete *(elements.begin() + searchIdx);
                 elements.erase(elements.begin() + searchIdx);
                 return RESULT_CODE::SUCCESS;
             }
             searchIdx++;
         }
+        if (diff != nullptr)
+            delete diff;
         pLogger->log("In Set::erase", RESULT_CODE::NOT_FOUND);
         return RESULT_CODE::NOT_FOUND;
     }
@@ -128,7 +140,12 @@ public:
             pLogger->log("In Set::clone", RESULT_CODE::OUT_OF_MEMORY);
             return nullptr;
         }
-        set->elements = elements;
+
+        auto n = elements.size();
+        set->elements.resize(n);
+
+        for (size_t i = 0; i < n; i++)
+            set->elements[i] = elements[i]->clone();
         return set;
     }
 
@@ -145,7 +162,7 @@ private:
 
 ISet * ISet::createSet( ILogger* pLogger )
 {
-    ISet *set = new SetImpl(pLogger);
+    ISet *set = new (std::nothrow) SetImpl(pLogger);
     if (set == nullptr)
         pLogger->log("In Set::clone", RESULT_CODE::OUT_OF_MEMORY);
     return set;

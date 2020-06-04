@@ -2,7 +2,14 @@
 #define ISET_H
 #include "ILogger.h"
 #include "IVector.h"
-class ISet {
+
+#ifdef _WIN32
+#define DECLSPEC __declspec(dllimport)
+#else
+#define DECLSPEC
+#endif
+
+class DECLSPEC ISet {
 public:
     static ISet* createSet(ILogger* pLogger);
     virtual ~ISet() = default;
