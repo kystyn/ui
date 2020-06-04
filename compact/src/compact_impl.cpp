@@ -1,7 +1,9 @@
 #include <cmath>
+#include <cstdlib>
+#include <new>
 
-#include "ICompact.h"
-#include "IVector.h"
+#include "../include/ICompact.h"
+#include "../include/IVector.h"
 
 // TODO : ~iterator, doStep
 
@@ -80,13 +82,15 @@ public:
     {
         if (vec == nullptr)
         {
-            logger->log("isContains: null param", RESULT_CODE::BAD_REFERENCE);
+            if (logger != nullptr)
+                logger->log("isContains: null param", RESULT_CODE::BAD_REFERENCE);
             return RESULT_CODE::BAD_REFERENCE;
         }
 
         if (vec->getDim() != getDim())
         {
-            logger->log("isContains: dimension mismatch", RESULT_CODE::WRONG_DIM);
+            if (logger != nullptr)
+                logger->log("isContains: dimension mismatch", RESULT_CODE::WRONG_DIM);
             return RESULT_CODE::WRONG_DIM;
         }
 
@@ -106,7 +110,8 @@ public:
         auto rc = isContains(other->getBegin(), iscontains);
         if (rc != RESULT_CODE::SUCCESS)
         {
-            logger->log("isSubset: bad this->getBegin() (?!)", RESULT_CODE::BAD_REFERENCE);
+            if (logger != nullptr)
+                logger->log("isSubset: bad this->getBegin() (?!)", RESULT_CODE::BAD_REFERENCE);
             return rc;
         }
 
@@ -115,7 +120,8 @@ public:
             rc = isContains(other->getEnd(), iscontains);
             if (rc != RESULT_CODE::SUCCESS)
             {
-                logger->log("isSubset: bad this->getEnd() (?!)", RESULT_CODE::BAD_REFERENCE);
+                if (logger != nullptr)
+                    logger->log("isSubset: bad this->getEnd() (?!)", RESULT_CODE::BAD_REFERENCE);
                 return rc;
             }
 
@@ -129,7 +135,8 @@ public:
     {
         if (!isValidData(this, other))
         {
-            logger->log("isIntersects: null param or dimension mismatch", RESULT_CODE::BAD_REFERENCE);
+            if (logger != nullptr)
+                logger->log("isIntersects: null param or dimension mismatch", RESULT_CODE::BAD_REFERENCE);
             return RESULT_CODE::BAD_REFERENCE;
         }
 
@@ -148,7 +155,7 @@ public:
 
     ICompact* clone() const override
     {
-        return new CompactImpl(theLeft, theRight, logger);
+        return new (std::nothrow) CompactImpl(theLeft, theRight, logger);
     }
 
     iterator * begin(IVector const* const step = nullptr) override
@@ -192,7 +199,8 @@ public:
 
             if (v == nullptr)
             {
-                logger->log("doStep: bad current or step vector", RESULT_CODE::WRONG_ARGUMENT);
+                if (logger != nullptr)
+                    logger->log("doStep: bad current or step vector", RESULT_CODE::WRONG_ARGUMENT);
                 return RESULT_CODE::WRONG_ARGUMENT;
             }
 
@@ -200,7 +208,8 @@ public:
             auto rc = compact->isContains(v, contains);
             if (rc != RESULT_CODE::SUCCESS)
             {
-                logger->log("doStep: bad current or step vector", rc);
+                if (logger != nullptr)
+                    logger->log("doStep: bad current or step vector", rc);
                 delete v;
                 return rc;
             }
@@ -234,7 +243,8 @@ public:
             const double tolerance = 1e-6;
             if (dir->getDim() != compact->getDim())
             {
-                logger->log("setDirection: dimension mismatch", RESULT_CODE::WRONG_DIM);
+                if (logger != nullptr)
+                    logger->log("setDirection: dimension mismatch", RESULT_CODE::WRONG_DIM);
                 return RESULT_CODE::WRONG_DIM;
             }
 
@@ -243,7 +253,8 @@ public:
                 auto coord = dir->getCoord(i);
                 if (std::abs(coord - std::round(coord)) > tolerance)
                 {
-                    logger->log("setDirection: direction is integer vector mention order to pass compact",
+                    if (logger != nullptr)
+                        logger->log("setDirection: direction is integer vector mention order to pass compact",
                                 RESULT_CODE::WRONG_ARGUMENT);
 
                     return RESULT_CODE::WRONG_ARGUMENT;
@@ -275,21 +286,20 @@ private:
 };
 }
 
-ICompact * createCompact(IVector const* const begin, IVector const* const end, ILogger*logger)
+ICompact * createCompact(IVector const* const begin, IVector const* const end, ILogger* logger)
 {
-    if (logger == nullptr)
-	std::cerr << "No logger mentioned\n";
-
     if (!isValidData(begin, end))
     {
-        logger->log("createCompact: null param or vector dimension mismatch", RESULT_CODE::BAD_REFERENCE);
+        if (logger != nullptr)
+            logger->log("createCompact: null param or vector dimension mismatch", RESULT_CODE::BAD_REFERENCE);
         return nullptr;
     }
 
     auto lessBegEnd = isLess(begin, end);
     if (!lessBegEnd && !isLess(end, begin))
     {
-        logger->log("createCompact: bounds are not comparable", RESULT_CODE::WRONG_ARGUMENT);
+        if (logger != nullptr)
+            logger->log("createCompact: bounds are not comparable", RESULT_CODE::WRONG_ARGUMENT);
         return nullptr;
     }
 
@@ -303,7 +313,8 @@ ICompact * intersection(ICompact const* const left, ICompact const* const right,
 {
     if (!isValidData(left, right))
     {
-        logger->log("intersection: null param or dimension mismatch", RESULT_CODE::BAD_REFERENCE);
+        if (logger != nullptr)
+            logger->log("intersection: null param or dimension mismatch", RESULT_CODE::BAD_REFERENCE);
         return nullptr;
     }
 
@@ -312,7 +323,8 @@ ICompact * intersection(ICompact const* const left, ICompact const* const right,
 
     if (rc != RESULT_CODE::SUCCESS)
     {
-        logger->log("intersection: smth went wrong", RESULT_CODE::BAD_REFERENCE);
+        if (logger != nullptr)
+            logger->log("intersection: smth went wrong", RESULT_CODE::BAD_REFERENCE);
         return nullptr;
     }
 
@@ -324,7 +336,8 @@ ICompact * intersection(ICompact const* const left, ICompact const* const right,
         return createCompact(l, r, logger);
     }
 
-    logger->log("intersection: cannot intersect", RESULT_CODE::WRONG_ARGUMENT);
+    if (logger != nullptr)
+        logger->log("intersecton: cannot intersect", RESULT_CODE::WRONG_ARGUMENT);
     return nullptr;
 }
 
@@ -333,7 +346,8 @@ ICompact* add(ICompact const* const left, ICompact const* const right, ILogger*l
 {
     if (!isValidData(left, right) || logger == nullptr)
     {
-        logger->log("add: null param or dimension mismatch", RESULT_CODE::BAD_REFERENCE);
+        if (logger != nullptr)
+            logger->log("add: null param or dimension mismatch", RESULT_CODE::BAD_REFERENCE);
         return nullptr;
     }
 
@@ -358,7 +372,8 @@ ICompact* add(ICompact const* const left, ICompact const* const right, ILogger*l
 
     if (dbegin == nullptr)
     {
-        logger->log("add: nonconsistent begin", RESULT_CODE::WRONG_ARGUMENT);
+        if (logger != nullptr)
+            logger->log("add: nonconsistent begin", RESULT_CODE::WRONG_ARGUMENT);
         return nullptr;
     }
 
@@ -384,7 +399,8 @@ ICompact* add(ICompact const* const left, ICompact const* const right, ILogger*l
 
         if (dend == nullptr)
         {
-            logger->log("add: nonconsistent end", RESULT_CODE::WRONG_ARGUMENT);
+            if (logger != nullptr)
+                logger->log("add: nonconsistent end", RESULT_CODE::WRONG_ARGUMENT);
             return nullptr;
         }
 
@@ -393,7 +409,8 @@ ICompact* add(ICompact const* const left, ICompact const* const right, ILogger*l
                                  max(left->getEnd(), right->getEnd()), logger);
     }
 
-    logger->log("add: cannot create convex union. Try makeConvex instead", RESULT_CODE::WRONG_ARGUMENT);
+    if (logger != nullptr)
+        logger->log("add: cannot create convex union. Try makeConvex instead", RESULT_CODE::WRONG_ARGUMENT);
     return nullptr;
 }
 
@@ -401,7 +418,8 @@ ICompact* makeConvex(ICompact const* const left, ICompact const* const right, IL
 {
     if (!isValidData(left, right) || logger == nullptr)
     {
-        logger->log("makeConvex: null param or dimension mismatch", RESULT_CODE::BAD_REFERENCE);
+        if (logger != nullptr)
+            logger->log("makeConvex: null param or dimension mismatch", RESULT_CODE::BAD_REFERENCE);
         return nullptr;
     }
 

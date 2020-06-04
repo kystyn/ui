@@ -11,7 +11,7 @@ public:
     {
         logStream = fopen("log.txt", "w");
         if (logStream == nullptr)
-            fprintf(stderr, "Couldn' create log.txt");
+            fprintf(stderr, "Couldn't create log.txt");
     }
 
     void destroyLogger(void* pClient) override
