@@ -11,7 +11,7 @@ public:
     {
         logStream = fopen("log.txt", "w");
         if (logStream == nullptr)
-            fprintf(stderr, "Couldn't create log.txt");
+            fprintf(stderr, "Couldn't create log.txt\n");
     }
 
     void destroyLogger(void* pClient) override
@@ -110,7 +110,14 @@ ILogger * ILogger::createLogger( void* pClient )
     auto logger = LoggerImpl::getInstance();
 
     if (logger == nullptr)
-        logger = new LoggerImpl();
+    {
+        logger = new (std::nothrow) LoggerImpl();
+	if (logger == nullptr)
+	{
+	    fprintf(stderr, "No memory for logger\n");
+	    return nullptr;
+        }
+    }
 
     logger->addClient(pClient);
     return logger;

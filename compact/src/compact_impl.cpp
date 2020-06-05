@@ -5,10 +5,10 @@
 #include "../include/ICompact.h"
 #include "../include/IVector.h"
 
-// TODO : ~iterator, doStep
-
 namespace
 {
+const double tolerance = 1e-6;
+
 bool isLess( IVector const *lhs, IVector const *rhs )
 {
     if (lhs->getDim() != rhs->getDim())
@@ -155,79 +155,124 @@ public:
 
     ICompact* clone() const override
     {
-        return new (std::nothrow) CompactImpl(theLeft, theRight, logger);
+        auto c = new (std::nothrow) CompactImpl(theLeft, theRight, logger);
+        if (c == nullptr)
+        {
+            if (logger != nullptr)
+                logger->log("clone: no memory", RESULT_CODE::OUT_OF_MEMORY);
+        }
+        return c;
     }
 
     iterator * begin(IVector const* const step = nullptr) override
     {
-        return new iterator(this, step, logger);
+        auto it = new (std::nothrow) iterator(this, step, logger);
+        if (it == nullptr)
+        {
+            if (logger != nullptr)
+                logger->log("begin: no memory", RESULT_CODE::OUT_OF_MEMORY);
+        }
+        return it;
     }
 
     iterator * end(IVector const* const step = nullptr) override
     {
-        return new iterator(this, step, logger, true);
+        auto it = new (std::nothrow) iterator(this, step, logger, true);
+        if (it == nullptr)
+        {
+            if (logger != nullptr)
+                logger->log("end: no memory", RESULT_CODE::OUT_OF_MEMORY);
+        }
+        return it;
     }
 
     class iterator : public ICompact::iterator
     {
         friend class CompactImpl;
     public:
+        // compact - always available
         iterator( ICompact const *compact, IVector const *step,
                   ILogger *logger, bool reverse = false ) :
             reverse(reverse),
             compact(compact->clone()), current(compact->getBegin()->clone()),
             logger(logger)
         {
-            if (step == nullptr)
-                this->step = nullptr;
-            this->step = step->clone();
-
+            const double stp = tolerance * 10;
             auto dim = compact->getDim();
             double *data = new double[dim];
+
+            if (step == nullptr)
+                for (size_t i = 0; i < dim; i++)
+                    data[i] = stp;
+
+            this->step = step->clone();
 
             for (size_t i = 0; i < dim; i++)
                 data[i] = i;
             dir = IVector::createVector(compact->getDim(), data, logger);
+            delete []data;
         }
 
         //adds step to current value in iterator
-        //+step
         RESULT_CODE doStep() override
         {
             // redo!
-            auto v = IVector::add(current, step, logger);
+            IVector *v = current->clone();
+            bool done = false;
 
-            if (v == nullptr)
+            auto
+                    begin = compact->getBegin(),
+                    end = compact->getEnd();
+            auto dim = compact->getDim();
+            for (size_t i = 0; i < dim && !done; i++)
             {
-                if (logger != nullptr)
-                    logger->log("doStep: bad current or step vector", RESULT_CODE::WRONG_ARGUMENT);
-                return RESULT_CODE::WRONG_ARGUMENT;
-            }
+                size_t idx = static_cast<size_t>(dir->getCoord(i));
 
-            bool contains;
-            auto rc = compact->isContains(v, contains);
-            if (rc != RESULT_CODE::SUCCESS)
-            {
-                if (logger != nullptr)
-                    logger->log("doStep: bad current or step vector", rc);
-                delete v;
-                return rc;
-            }
-
-            if (contains) // no mem leaks!
-            {
-                for (size_t i = 0; i < current->getDim(); i++)
+                // we stayed at boound, so go to begin
+                if (!reverse)
                 {
-                    rc = current->setCoord(i, v->getCoord(i));
-                    if (rc != RESULT_CODE::SUCCESS)
+                    if (std::abs(v->getCoord(idx) - end->getCoord(idx)) < tolerance)
                     {
-                        logger->log("doStep: setCoord went wrong", rc);
-                        delete v;
-                        return rc;
+                        v->setCoord(idx, begin->getCoord(idx));
+                        continue;
                     }
                 }
-                delete v;
+                else
+                {
+                    if (std::abs(v->getCoord(idx) - begin->getCoord(idx)) < tolerance)
+                    {
+                        v->setCoord(idx, end->getCoord(idx));
+                        continue;
+                    }
+                }
+
+                // reverse is true => 2 * !reverse - 1 == -1
+                // reverse is false => 2 * !reverse -1 == 1
+                v->setCoord(idx, v->getCoord(idx) + (2 * !reverse - 1) * step->getCoord(idx));
+
+                bool contains;
+                auto rc = compact->isContains(v, contains);
+
+                if (rc != RESULT_CODE::SUCCESS)
+                {
+                    if (logger != nullptr)
+                        logger->log("doStep: bad current or step vector", rc);
+                    delete v;
+                    return rc;
+                }
+
+                if (contains)
+                    current->setCoord(idx, v->getCoord(idx));
+                else
+                    current->setCoord(idx, end->getCoord(idx));
+
+                done = true;
             }
+
+            if (done)
+                for (size_t i = 0; i < dim; i++)
+                    current->setCoord(i, v->getCoord(i));
+            delete v;
 
             return RESULT_CODE::SUCCESS;
         }
@@ -240,13 +285,35 @@ public:
         //change order of step
         RESULT_CODE setDirection(IVector const* const dir) override
         {
-            const double tolerance = 1e-6;
             if (dir->getDim() != compact->getDim())
             {
                 if (logger != nullptr)
                     logger->log("setDirection: dimension mismatch", RESULT_CODE::WRONG_DIM);
                 return RESULT_CODE::WRONG_DIM;
             }
+
+            auto dim = dir ->getDim();
+
+            auto checkUnique = [dir, dim]( size_t idx )
+            {
+                auto coord = dir->getCoord(idx);
+                for (size_t i = 0; i < dim; i++)
+                {
+                    if (i == idx)
+                        continue;
+                    if (std::abs(dir->getCoord(i) - coord) < tolerance)
+                        return false;
+                }
+                return true;
+            };
+
+            for (size_t i = 0; i < dim; i++)
+                if (!checkUnique(i))
+                {
+                    if (logger != nullptr)
+                        logger->log("setDirection: direction with repeated coordinates", RESULT_CODE::WRONG_ARGUMENT);
+                    return RESULT_CODE::WRONG_ARGUMENT;
+                }
 
             for (size_t i = 0; i < compact->getDim(); i++)
             {
@@ -267,7 +334,10 @@ public:
         /*dtor*/
         ~iterator() override
         {
-
+            delete dir;
+            delete step;
+            delete current;
+            delete compact;
         }
     private:
         bool reverse;
