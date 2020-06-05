@@ -1,6 +1,7 @@
 #include <cstring>
 #include <cmath>
 #include <memory>
+#include <new>
 #include <iostream>
 #include <limits>
 #include "../include/IVector.h"

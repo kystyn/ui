@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <new>
 #include <vector>
 #include "../include/ISet.h"
 

@@ -1,3 +1,5 @@
+#include <iostream>
+#include <cassert>
 #include "../include/ICompact.h"
 #include "../include/IVector.h"
 #include "../include/ILogger.h"
@@ -5,12 +7,79 @@
 int main( int argc, char *argv[] )
 {
     ILogger *logger = ILogger::createLogger(argv[0]);
-    logger->log("alive", RESULT_CODE::NAN_VALUE);
+
+    double data[] = {0, 0, 0};
+    IVector *begin = IVector::createVector(3, data, logger);
+    if (begin == nullptr)
+        std::cout << "not create begin\n";
+
+    data[0] = data[1] = data[2] = 1;
+
+    IVector *end = IVector::createVector(3, data, nullptr);
+    if (end == nullptr)
+        std::cout << "not create end\n";
+
+    // good compact 1
+    std::cout << "good compact\n";
+    ICompact *compact1 = ICompact::createCompact(begin, end, logger);
+
+    delete begin;
+    if (compact1 == nullptr)
+        std::cout << "compact1 not create\n";
+
+    // bad compact
+    begin = IVector::createVector(2, data, logger);
+    ICompact *compact2 = ICompact::createCompact(begin, end, logger);
+    if (compact2 != nullptr)
+        std::cout << "created compact2 but should not\n";
+
+    compact2 = ICompact::createCompact(begin, end, nullptr);
+    delete begin;
+    if (compact2 != nullptr)
+        std::cout << "bad compact2 could not create\n";
+
+    std::cout << "dim: " << compact1->getDim() << "\n";
+
+    // good compact 2
+    data[0] = data[1] = data[2] = 0.5;
+    begin = IVector::createVector(3, data, logger);
+
+    if (begin == nullptr)
+        std::cout << "begin 0.5 not create\n";
+
+    compact2 = ICompact::createCompact(begin, end, logger);
+
+    if (compact2 == nullptr)
+        std::cout << "good compact 2 not create\n";
+
+    auto unify = ICompact::add(compact1, compact2, logger);
+
+    // unify: one in other
+    if (unify == nullptr)
+        std::cout << "not unidfied 1 and 2 but should\n";
+
+    // good compact 3
+    data[0] = data[1] = data[2] = 1.5;
+    end = IVector::createVector(3, data, logger);
+
+    if (end == nullptr)
+        std::cout << "end 1.5 not create\n";
+
+    ICompact *compact3 = ICompact::createCompact(begin, end, logger);
+
+    if (compact3 == nullptr)
+        std::cout << "compact 3 not create\n";
+
+    unify = ICompact::add(compact1, compact3, logger);
+
+    if (unify != nullptr)
+        std::cout << "no unify but create\n";
+
+    auto inters = ICompact::intersection(compact3, compact1, logger);
+
+    if (inters == nullptr)
+        std::cout << "has intersection but not create\n";
+
     logger->destroyLogger(argv[0]);
-    logger->createLogger((void*)"f,shdfku");
-    logger->log("alive2", RESULT_CODE::NAN_VALUE);
-    logger->destroyLogger(argv[0]);
-    double d[] = {2, 4};
-    IVector *vector = IVector::createVector(2, d, nullptr);
 	return 0;
 }

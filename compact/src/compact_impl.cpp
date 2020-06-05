@@ -186,6 +186,12 @@ public:
         return it;
     }
 
+    ~CompactImpl() override
+    {
+        delete theLeft;
+        delete theRight;
+    }
+
     class iterator : public ICompact::iterator
     {
         friend class CompactImpl;
@@ -356,7 +362,7 @@ private:
 };
 }
 
-ICompact * createCompact(IVector const* const begin, IVector const* const end, ILogger* logger)
+ICompact * ICompact::createCompact(IVector const* const begin, IVector const* const end, ILogger* logger)
 {
     if (!isValidData(begin, end))
     {
@@ -379,7 +385,7 @@ ICompact * createCompact(IVector const* const begin, IVector const* const end, I
     return new (std::nothrow) CompactImpl(const_cast<IVector *>(end), const_cast<IVector *>(begin), logger);
 }
 
-ICompact * intersection(ICompact const* const left, ICompact const* const right, ILogger* logger)
+ICompact * ICompact::intersection(ICompact const* const left, ICompact const* const right, ILogger* logger)
 {
     if (!isValidData(left, right))
     {
@@ -412,7 +418,7 @@ ICompact * intersection(ICompact const* const left, ICompact const* const right,
 }
 
 //union
-ICompact* add(ICompact const* const left, ICompact const* const right, ILogger*logger)
+ICompact* ICompact::add(ICompact const* const left, ICompact const* const right, ILogger*logger)
 {
     if (!isValidData(left, right) || logger == nullptr)
     {
@@ -484,7 +490,7 @@ ICompact* add(ICompact const* const left, ICompact const* const right, ILogger*l
     return nullptr;
 }
 
-ICompact* makeConvex(ICompact const* const left, ICompact const* const right, ILogger*logger)
+ICompact * ICompact::makeConvex(ICompact const* const left, ICompact const* const right, ILogger*logger)
 {
     if (!isValidData(left, right) || logger == nullptr)
     {

@@ -40,7 +40,7 @@ public:
     virtual ICompact* clone() const = 0;
 
     /*dtor*/
-    virtual ~ICompact() = 0;
+    virtual ~ICompact() = default;
 
     class iterator
     {

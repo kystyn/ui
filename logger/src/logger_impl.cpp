@@ -24,6 +24,7 @@ public:
 
         if (clients.empty()) {
             fclose(logStream);
+	    logStream = nullptr;
             delete instance;
             instance = nullptr;
         }
@@ -96,6 +97,11 @@ public:
 protected:
     ~LoggerImpl() override
     {
+        if (logStream != nullptr)
+        {	
+	    fclose(logStream);
+	    logStream = nullptr;
+	}
     }
 
 private:
