@@ -9,9 +9,11 @@ class LoggerImpl : public ILogger
 public:
     LoggerImpl()
     {
-        logStream = fopen("log.txt", "w");
+        logStream = fopen(("log" + std::to_string(logFileNo) + ".txt").c_str(), "w");
         if (logStream == nullptr)
             fprintf(stderr, "Couldn't create log.txt\n");
+	else
+	    logFileNo++;
     }
 
     void destroyLogger(void* pClient) override
@@ -100,9 +102,11 @@ private:
     static LoggerImpl *instance;
     std::set<void *> clients;
     FILE *logStream;
+    static int logFileNo;
 };
 
 LoggerImpl *LoggerImpl::instance = new LoggerImpl();
+int LoggerImpl::logFileNo = 0;
 }
 
 ILogger * ILogger::createLogger( void* pClient )
