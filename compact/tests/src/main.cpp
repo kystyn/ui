@@ -4,6 +4,18 @@
 #include "../include/IVector.h"
 #include "../include/ILogger.h"
 
+void output( IVector *vec )
+{
+    if (vec == nullptr)
+    {
+        std::cout << "error\n";
+        return;
+    }
+    for (size_t i = 0; i < vec->getDim(); ++i)
+        std::cout << vec->getCoord(i) << ' ';
+    std::cout << "\n";
+}
+
 int main( int argc, char *argv[] )
 {
     ILogger *logger = ILogger::createLogger(argv[0]);
@@ -79,6 +91,44 @@ int main( int argc, char *argv[] )
 
     if (inters == nullptr)
         std::cout << "has intersection but not create\n";
+
+    data[0] = 0.5;
+    data[1] = 1.1;
+    data[2] = 0.5;
+    auto pt = IVector::createVector(3, data, logger);
+    bool cntns;
+    inters->isContains(pt, cntns);
+    std::cout << "contains: " << cntns << "\n";
+
+    data[0] = 0.1;
+    data[1] = 0.2;
+    data[2] = 0.15;
+
+    output(inters->getBegin());
+    output(inters->getEnd());
+    // iterate over compact beg -> end
+    for (auto it = inters->begin(IVector::createVector(3, data, logger));
+         IVector::sub(it->getPoint(), inters->getEnd(), logger)->norm(IVector::NORM::NORM_2) > 1e-6; it->doStep())
+        output(it->getPoint());
+
+    // iterate over compact end -> beg
+    for (auto it = inters->end(IVector::createVector(3, data, logger));
+         IVector::sub(it->getPoint(), inters->getBegin(), logger)->norm(IVector::NORM::NORM_2) > 1e-6; it->doStep())
+        output(it->getPoint());
+
+
+    // iterate with specific direction and other data
+    data[0] = 0.07;
+    data[1] = 0.13;
+    data[2] = 0.15;
+
+    double dirData[] = {2, 0, 1};
+
+    auto it = inters->begin(IVector::createVector(3, data, logger));
+    auto dir = IVector::createVector(3, dirData, nullptr);
+    it->setDirection(IVector::createVector(3, dirData, logger));
+    for (; IVector::sub(it->getPoint(), inters->getEnd(), logger)->norm(IVector::NORM::NORM_2) > 1e-6; it->doStep())
+        output(it->getPoint());
 
     logger->destroyLogger(argv[0]);
 	return 0;

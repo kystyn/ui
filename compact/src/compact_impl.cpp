@@ -1,6 +1,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <new>
+//#include <iostream>
 
 #include "../include/ICompact.h"
 #include "../include/IVector.h"
@@ -200,7 +201,8 @@ public:
         iterator( ICompact const *compact, IVector const *step,
                   ILogger *logger, bool reverse = false ) :
             reverse(reverse),
-            compact(compact->clone()), current(compact->getBegin()->clone()),
+            compact(compact->clone()),
+            current(!reverse ? compact->getBegin()->clone() : compact->getEnd()->clone()),
             logger(logger)
         {
             const double stp = tolerance * 10;
@@ -232,9 +234,9 @@ public:
             auto dim = compact->getDim();
             for (size_t i = 0; i < dim && !done; i++)
             {
-                size_t idx = static_cast<size_t>(dir->getCoord(i));
+                size_t idx = static_cast<size_t>(std::round(dir->getCoord(i)));
 
-                // we stayed at boound, so go to begin
+                // we stayed at bound, so go to begin
                 if (!reverse)
                 {
                     if (std::abs(v->getCoord(idx) - end->getCoord(idx)) < tolerance)
@@ -267,10 +269,13 @@ public:
                     return rc;
                 }
 
-                if (contains)
-                    current->setCoord(idx, v->getCoord(idx));
-                else
-                    current->setCoord(idx, end->getCoord(idx));
+                if (!contains)
+                {
+                    if (!reverse)
+                        v->setCoord(idx, end->getCoord(idx));
+                    else
+                        v->setCoord(idx, begin->getCoord(idx));
+                }
 
                 done = true;
             }
@@ -303,6 +308,8 @@ public:
             auto checkUnique = [dir, dim]( size_t idx )
             {
                 auto coord = dir->getCoord(idx);
+                if (coord < 0 || coord > dim - 1)
+                    return false;
                 for (size_t i = 0; i < dim; i++)
                 {
                     if (i == idx)

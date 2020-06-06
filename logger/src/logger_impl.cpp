@@ -109,6 +109,7 @@ private:
     std::set<void *> clients;
     FILE *logStream;
     static int logFileNo;
+    friend ILogger * ILogger::createLogger( void * );
 };
 
 LoggerImpl *LoggerImpl::instance = new LoggerImpl();
@@ -121,7 +122,8 @@ ILogger * ILogger::createLogger( void* pClient )
 
     if (logger == nullptr)
     {
-        logger = new (std::nothrow) LoggerImpl();
+        LoggerImpl::instance = new (std::nothrow) LoggerImpl();
+	logger = LoggerImpl::getInstance();
 	if (logger == nullptr)
 	{
 	    fprintf(stderr, "No memory for logger\n");
