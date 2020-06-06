@@ -15,12 +15,12 @@ void output( IVector *vec )
     std::cout << "\n";
 }
 
-int main()
+int main( int argc, char *argv[] )
 {
     double
             coords1[] = {1., 2., 3., 4., 5.},
             coords2[] = {10., 20., 30., 40., 50.};
-    ILogger *logger = ILogger::createLogger((void *)"main");
+    ILogger *logger = ILogger::createLogger(argv[0]);
     IVector
             *v1 = IVector::createVector(5, coords1, logger),
             *v2 = IVector::createVector(5, coords2, logger);

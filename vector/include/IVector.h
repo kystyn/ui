@@ -1,16 +1,16 @@
 #ifndef IVECTOR_H
 #define IVECTOR_H
 
-
 #include<stddef.h>
 #include "ILogger.h"
 
+#ifdef _WIN32
+#define DECLSPEC __declspec(dllexport)
+#else
+#define DECLSPEC
+#endif
 
-
-
-
-
-class IVector {
+class DECLSPEC IVector {
 public:
     enum class NORM {
         NORM_1,

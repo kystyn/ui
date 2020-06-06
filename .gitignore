@@ -4,5 +4,6 @@ build*
 *.so
 doc
 libs
+bin
 *.user
 
