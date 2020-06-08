@@ -65,7 +65,7 @@ public:
     //class iterator;
 
     CompactImpl( IVector *left, IVector *right, ILogger *logger ) :
-         theLeft(left), theRight(right), dim(left->getDim()), logger(logger)
+         theLeft(left->clone()), theRight(right->clone()), dim(left->getDim()), logger(logger)
     {
     }
 
@@ -439,17 +439,18 @@ ICompact* ICompact::add(ICompact const* const left, ICompact const* const right,
         isLess(right->getEnd(), left->getBegin()))
         return nullptr;
 
+    // right in left!!!
     auto compactIsInCompact = []( ICompact const * const lhs, ICompact const * const rhs )
     {
         return
                 isLess(lhs->getBegin(), rhs->getBegin()) &&
-                isLess(lhs->getEnd(), rhs->getEnd());
+                isLess(rhs->getEnd(), lhs->getEnd());
     };
 
     if (compactIsInCompact(left, right))
-        return right->clone();
-    if (compactIsInCompact(right, left))
         return left->clone();
+    if (compactIsInCompact(right, left))
+        return right->clone();
 
     auto dbegin = IVector::sub(left->getBegin(), right->getBegin(), logger);
 
@@ -461,22 +462,25 @@ ICompact* ICompact::add(ICompact const* const left, ICompact const* const right,
     }
 
     // we check here that vector v is parallel to any axis
-    auto checkParallel = []( IVector const * const v )
+    auto checkParallel = []( IVector const * const v , int &axisNo )
     {
-        const double tolerance = 1e-6;
         int nonZeroCount = 0;
         double nrm = v->norm(IVector::NORM::NORM_INF);
         for (size_t i = 0; i < v->getDim() && nonZeroCount < 2; i++)
-            if (std::abs(v->getCoord(i) / nrm) < tolerance)
+            if (std::abs(v->getCoord(i) / nrm) > tolerance)
+            {
+                axisNo = i;
                 nonZeroCount++;
+            }
 
-        if (nonZeroCount >= 2)
+        if (nonZeroCount > 1)
             return false;
 
         return true;
     };
 
-    if (checkParallel(dbegin))
+    int axisNoBeg, axisNoEnd;
+    if (checkParallel(dbegin, axisNoBeg))
     {
         auto dend = IVector::sub(left->getEnd(), right->getEnd(), logger);
 
@@ -487,9 +491,10 @@ ICompact* ICompact::add(ICompact const* const left, ICompact const* const right,
             return nullptr;
         }
 
-        if (checkParallel(dend))
-            return createCompact(min(left->getBegin(), right->getBegin()),
-                                 max(left->getEnd(), right->getEnd()), logger);
+        if (checkParallel(dend, axisNoEnd))
+            if (axisNoBeg == axisNoEnd)
+                return createCompact(min(left->getBegin(), right->getBegin()),
+                                     max(left->getEnd(), right->getEnd()), logger);
     }
 
     if (logger != nullptr)
