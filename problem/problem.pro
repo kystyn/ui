@@ -2,26 +2,24 @@ QT -= gui
 
 CONFIG += c++11 console
 
-TARGET= solver
+TARGET = problem
 
 TEMPLATE = lib
 
 DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
-        src/brocker_impl.cpp \
-        src/solver_impl.cpp
+        src/problem_impl.cpp \
+        src/brocker_impl.cpp
 
 HEADERS += \
         include/ILogger.h \
         include/ICompact.h \
-        include/ISolver.h \
         include/IVector.h \
         include/IProblem.h \
         include/IBrocker.h \
         include/RC.h \
-        include/solver_impl.h
-
+        include/problem_impl.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -31,4 +29,3 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 CONFIG: LIBS += -L$$PWD/libs/ -llogger
 CONFIG: LIBS += -L$$PWD/libs/ -lvector
 CONFIG: LIBS += -L$$PWD/libs/ -lcompact
-#CONFIG: LIBS += -L$$PWD/libs/ -lproblem
