@@ -1,8 +1,54 @@
-#include "include/solver_impl.h"
+#include "include/ISolver.h"
+#include "include/IBrocker.h"
+
+#ifdef _WIN32
+#define DECLSPEC __declspec(dllexport)
+#else
+#define DECLSPEC
+#endif
 
 namespace
 {
-SolverImpl::SolverImpl() : params(nullptr), problemParams(nullptr), problem(nullptr), compact(nullptr)
+
+/*
+ * Solver param: compact step
+ */
+class DECLSPEC SolverImpl : public ISolver
+{
+public:
+    SolverImpl();
+
+    RESULT_CODE setParams(IVector const* params) override;
+
+    RESULT_CODE setParams(QString& str) override;
+
+    RESULT_CODE setProblem(IProblem *pProblem) override;
+
+    RESULT_CODE setProblemParams(IVector const* params) override;
+
+    RESULT_CODE setCompact(ICompact *pCompact) override;
+
+    size_t getParamsDim() const override;
+
+    RESULT_CODE solve() override;
+
+    RESULT_CODE getSolution(IVector * &vec) const override;
+
+    ~SolverImpl() override;
+
+private:
+    IVector *solution;
+    IVector *params;
+    IVector *problemParams;
+    ILogger *logger;
+    IProblem *problem;
+    ICompact *compact;
+};
+
+SolverImpl::SolverImpl() :
+    solution(nullptr), params(nullptr),
+    problemParams(nullptr), problem(nullptr),
+    compact(nullptr)
 {
     logger = ILogger::createLogger(this);
 }
@@ -16,12 +62,6 @@ RESULT_CODE SolverImpl::setParams(const IVector *params)
         return RESULT_CODE::BAD_REFERENCE;
     }
 
-    if (params->getDim() != 1)
-    {
-        if (logger != nullptr)
-            logger->log("solver::setParams: not 1D param vector", RESULT_CODE::WRONG_DIM);
-        return RESULT_CODE::WRONG_DIM;
-    }
 
     if (this->params != nullptr)
         delete this->params;
@@ -81,6 +121,8 @@ RESULT_CODE SolverImpl::setCompact(ICompact *pCompact)
 
 size_t SolverImpl::getParamsDim() const
 {
+    if (params == nullptr)
+        return 0;
     return params->getDim();
 }
 
@@ -93,6 +135,13 @@ RESULT_CODE SolverImpl::solve()
         return RESULT_CODE::WRONG_ARGUMENT;
     }
 
+    if (params->getDim() != compact->getDim())
+    {
+        if (logger != nullptr)
+            logger->log("solver::solve: params dimension should beq equal to compact", RESULT_CODE::WRONG_DIM);
+        return RESULT_CODE::WRONG_DIM;
+    }
+
     auto it = compact->begin(params);
     if (it == nullptr)
     {
@@ -101,7 +150,8 @@ RESULT_CODE SolverImpl::solve()
         return RESULT_CODE::WRONG_ARGUMENT;
     }
 
-    problem->setParams(problemParams);
+    if (problemParams != nullptr)
+        problem->setParams(problemParams);
 
     auto end = compact->getEnd();
     const double tolerance = 1e-6;
@@ -117,11 +167,12 @@ RESULT_CODE SolverImpl::solve()
     }
 
     IVector *bestSolution = IVector::createVector(dim, data, logger);
+    delete []data;
 
-    if (bestSolution != nullptr)
+    if (bestSolution == nullptr)
     {
         if (logger != nullptr)
-            logger->log("solve: smth bad with vector creater", RESULT_CODE::WRONG_ARGUMENT);
+            logger->log("solve: smth bad with vector created", RESULT_CODE::WRONG_ARGUMENT);
         return RESULT_CODE::WRONG_ARGUMENT;
     }
 
@@ -169,8 +220,14 @@ RESULT_CODE SolverImpl::solve()
         }
 
         if (dist->norm(IVector::NORM::NORM_INF) < tolerance)
+        {
+            delete dist;
             break;
+        }
+        delete dist;
     }
+
+    delete it;
 
     if (std::abs(startBestRes - bestRes) < tolerance)
     {
@@ -206,4 +263,61 @@ SolverImpl::~SolverImpl()
     delete problemParams;
     delete compact;
 }
+
+class DECLSPEC BrockerImpl : public IBrocker
+{
+private:
+    BrockerImpl()
+    {
+        impl = new (std::nothrow) SolverImpl();
+    }
+
+public:
+    Type getType() const override
+    {
+        return Type::SOLVER;
+    }
+
+    void * getInterfaceImpl(Type type) const override
+    {
+        switch (type)
+        {
+        case Type::SOLVER:
+            return impl;
+        default:
+            return nullptr;
+        }
+    }
+    void release() override // harakiri
+    {
+        delete impl;
+        impl = nullptr;
+    }
+
+    static BrockerImpl * getInstance()
+    {
+        return instance;
+    }
+
+    /*dtor*/
+    ~BrockerImpl() override
+    {
+        delete impl;
+    }
+private:
+    SolverImpl *impl;
+    static BrockerImpl *instance;
+};
+
+BrockerImpl * BrockerImpl::instance = new BrockerImpl;
+}
+
+extern "C"
+{
+
+DECLSPEC void * getBrocker()
+{
+    return BrockerImpl::getInstance();
+}
+
 }

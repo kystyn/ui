@@ -9,7 +9,6 @@ TEMPLATE = lib
 DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
-        src/brocker_impl.cpp \
         src/solver_impl.cpp
 
 HEADERS += \
@@ -19,8 +18,7 @@ HEADERS += \
         include/IVector.h \
         include/IProblem.h \
         include/IBrocker.h \
-        include/RC.h \
-        include/solver_impl.h
+        include/RC.h
 
 
 # Default rules for deployment.
@@ -28,7 +26,7 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
-CONFIG: LIBS += -L$$PWD/libs/ -llogger
-CONFIG: LIBS += -L$$PWD/libs/ -lvector
-CONFIG: LIBS += -L$$PWD/libs/ -lcompact
-#CONFIG: LIBS += -L$$PWD/libs/ -lproblem
+LIBS += -L$$PWD/libs/ -llogger
+LIBS += -L$$PWD/libs/ -lvector
+LIBS += -L$$PWD/libs/ -lcompact
+#LIBS += -L$$PWD/libs/ -lproblem

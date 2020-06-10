@@ -1,8 +1,49 @@
 #include <cmath>
-#include "include/problem_impl.h"
+#include <new>
+#include "include/IProblem.h"
+#include "include/IBrocker.h"
+
+#ifdef _WIN32
+#define DECLSPEC __declspec(dllexport)
+#else
+#define DECLSPEC
+#endif
 
 namespace
 {
+
+/* Sofa problem for rectangular shape
+ * Problem: find such D and B that rectangular ship
+ * with length D and width B will be able to pass
+ * 90-degree turn of channel with width W (param)
+ *
+ * arg: (D, B)
+ * param: (W, Tc)
+ * where
+ * Tc - count of positions to be cheked in the turn
+ */
+class DECLSPEC ProblemImpl : public IProblem
+{
+public:
+    //args - x , params - coef
+    // args - width and heigh
+    RESULT_CODE goalFunction(IVector const* args, IVector const* params, double& res) const override;
+    RESULT_CODE goalFunctionByArgs(IVector const*  args, double& res) const override;
+    size_t getArgsDim() const override;
+    size_t getParamsDim() const override;
+
+    RESULT_CODE setParams(IVector const* params) override;
+    bool isCompactValid(ICompact const * const & compact) const override;
+
+    ~ProblemImpl() override;
+
+    ProblemImpl();
+
+private:
+    ILogger *logger;
+    IVector *params;
+};
+
 
 RESULT_CODE ProblemImpl::goalFunction(const IVector *args, const IVector *params, double &res) const
 {
@@ -37,8 +78,9 @@ RESULT_CODE ProblemImpl::goalFunction(const IVector *args, const IVector *params
     };
 
     bool available = true;
-    for (double t = 0, maxt = 2 * sq2 * params->getCoord(0);
-         t <= maxt; t += (maxt - 1) / params->getCoord(1))
+    for (double maxt = args->getCoord(0),
+            step = maxt / params->getCoord(1), t = step;
+         t < maxt; t += step)
         if (!checkAvailable(t))
         {
             available = false;
@@ -46,9 +88,9 @@ RESULT_CODE ProblemImpl::goalFunction(const IVector *args, const IVector *params
         }
 
     if (available)
-        res = params->getCoord(0) * params->getCoord(1);
+        res = -args->getCoord(0) * args->getCoord(1);
     else
-        res = 0;
+        res = 10;
 
     return RESULT_CODE::SUCCESS;
 }
@@ -132,5 +174,61 @@ ProblemImpl::ProblemImpl() : params(nullptr)
     logger = ILogger::createLogger(this);
 }
 
+class DECLSPEC BrockerImpl : public IBrocker
+{
+private:
+    BrockerImpl()
+    {
+        impl = new (std::nothrow) ProblemImpl();
+    }
+
+public:
+    Type getType() const override
+    {
+        return Type::PROBLEM;
+    }
+
+    void * getInterfaceImpl(Type type) const override
+    {
+        switch (type)
+        {
+        case Type::PROBLEM:
+            return impl;
+        default:
+            return nullptr;
+        }
+    }
+
+    void release() override // harakiri
+    {
+        delete impl;
+        impl = nullptr;
+    }
+
+    static BrockerImpl * getInstance()
+    {
+        return instance;
+    }
+
+    /*dtor*/
+    ~BrockerImpl() override
+    {
+        delete impl;
+    }
+private:
+    ProblemImpl *impl;
+    static BrockerImpl *instance;
+};
+
+BrockerImpl * BrockerImpl::instance = new BrockerImpl;
+}
+
+extern "C"
+{
+
+DECLSPEC void * getBrocker()
+{
+    return BrockerImpl::getInstance();
+}
 
 }
