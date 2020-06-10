@@ -62,6 +62,7 @@ InterfaceT * load( QFileInfo const &fileName, ILogger *logger, IBrocker *&brocke
 
 int main(int argc, char *argv[])
 {
+    // You can view available paths (to be hardcoded) in comments
     ILogger *logger = ILogger::createLogger(argv[0]);
 
     std::cout << "Input problem library address without suffix: ";
@@ -71,8 +72,7 @@ int main(int argc, char *argv[])
 
     IBrocker *problemBrocker;
 
-    /// TMP
-    name = "../user_app/libs/libproblem";
+    /// name = "../user_app/libs/problem";
     auto problem = load<IProblem, IBrocker::Type::PROBLEM>(QFileInfo(name.c_str()), logger, problemBrocker);
 
     if (problem == nullptr)
@@ -87,8 +87,7 @@ int main(int argc, char *argv[])
     std::cin >> name;
 
     IBrocker *solverBrocker;
-    /// TMP
-    name = "../user_app/libs/libsolver";
+    ///name = "../user_app/libs/solver";
     auto solver = load<ISolver, IBrocker::Type::SOLVER>(QFileInfo(name.c_str()), logger, solverBrocker);
 
     if (solver == nullptr)
@@ -103,14 +102,14 @@ int main(int argc, char *argv[])
     std::cout << "Input problem params dimension: ";
     size_t dim;
     std::cin >> dim;
-    dim = 2;
+    ///dim = 2;
     std::cout << "Input problem params vector, separated with ws or enter: ";
     double *data = new double[dim];
     for (size_t i = 0; i < dim; i++)
         std::cin >> data[i];
 
-    data[0] = 1;
-    data[1] = 100;
+    ///data[0] = 1;
+    ///data[1] = 100;
 
     IVector *v;
 
@@ -141,24 +140,24 @@ int main(int argc, char *argv[])
 
     std::cout << "Input solver params dimension: ";
     std::cin >> dim;
-    dim = 2;
+    ///dim = 2;
+
     std::cout << "Input solver params vector, separated with ws or enter: ";
-    std::string s = "dim = 2; step = 0.002, 0.003";
-    /*
+    /// the way with string
+    ///std::string s = "dim = 2; step = 0.002, 0.003";
+    /// QString qs(s.c_str());
+    /// rc = solver->setParams(qs);
+
+    // more convinient and obvious way IMHO
     data = new double[dim];
     for (size_t i = 0; i < dim; i++)
         std::cin >> data[i];
 
-    data[0] = 0.002;
-    data[1] = 0.003;
+    v = IVector::createVector(dim, data, logger);
+    rc = solver->setParams(v);
 
-    v = IVector::createVector(dim, data, logger);*/
-    QString qs(s.c_str());
-    rc = solver->setParams(qs);
-    /*
     delete []data;
     delete v;
-    */
 
     if (rc != RESULT_CODE::SUCCESS)
     {
@@ -176,17 +175,17 @@ int main(int argc, char *argv[])
     for (size_t i = 0; i < dim; i++)
         std::cin >> data[i];
 
-    dim = 2;
-    data[0] = 0;
-    data[1] = 0;
+    ///dim = 2;
+    ///data[0] = 0;
+    ///data[1] = 0;
     auto beg = IVector::createVector(dim, data, logger);
 
     std::cout << "input end vector with the same dimension: ";
     for (size_t i = 0; i < dim; i++)
         std::cin >> data[i];
 
-    data[0] = 2.8;
-    data[1] = 1;
+    ///data[0] = 2.8;
+    ///data[1] = 1;
 
     auto end = IVector::createVector(dim, data, logger);
     delete []data;
@@ -216,7 +215,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    IVector *solution;
+    IVector *solution = nullptr;
     rc = solver->getSolution(solution);
 
     if (rc != RESULT_CODE::SUCCESS)
@@ -225,8 +224,9 @@ int main(int argc, char *argv[])
     {
         std::cout << "Solution was found: ";
         output(solution);
-        delete solution;
     }
+
+    delete solution;
 
     problemBrocker->release();
     solverBrocker->release();

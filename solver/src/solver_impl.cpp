@@ -4,19 +4,13 @@
 #include "include/ISolver.h"
 #include "include/IBrocker.h"
 
-#ifdef _WIN32
-#define DECLSPEC __declspec(dllexport)
-#else
-#define DECLSPEC
-#endif
-
 namespace
 {
 
 /*
  * Solver param: compact step
  */
-class DECLSPEC SolverImpl : public ISolver
+class SolverImpl : public ISolver
 {
 public:
     SolverImpl();
@@ -177,7 +171,7 @@ RESULT_CODE SolverImpl::setProblem(IProblem *pProblem)
             logger->log("solver::setProblem: null param", RESULT_CODE::BAD_REFERENCE);
         return RESULT_CODE::BAD_REFERENCE;
     }
-    problem = pProblem; // clone???
+    problem = pProblem;
     return RESULT_CODE::SUCCESS;
 }
 
@@ -359,7 +353,7 @@ SolverImpl::~SolverImpl()
     delete compact;
 }
 
-class DECLSPEC BrockerImpl : public IBrocker
+class BrockerImpl : public IBrocker
 {
 private:
     BrockerImpl()

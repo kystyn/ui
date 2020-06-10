@@ -7,7 +7,7 @@
 #include <QString>
 
 #ifdef _WIN32
-#define DECLSPEC __declspec(dllimport)
+#define DECLSPEC __declspec(dllexport)
 #else
 #define DECLSPEC
 #endif

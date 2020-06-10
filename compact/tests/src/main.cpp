@@ -5,7 +5,7 @@
 #include "../include/ILogger.h"
 
 // uncomment lower define if you want to see iterator work
-// #define ITERATE
+#define ITERATE
 
 void output( IVector *vec )
 {
@@ -199,17 +199,20 @@ int main( int argc, char *argv[] )
 
 #ifdef ITERATE
     std::cout << "Iteratre intersetion beg->end\n";
+    auto it = inters->begin(IVector::createVector(3, data, logger));
     // iterate over compact beg -> end
-    for (auto it = inters->begin(IVector::createVector(3, data, logger));
-         IVector::sub(it->getPoint(), inters->getEnd(), logger)->norm(IVector::NORM::NORM_2) > 1e-6; it->doStep())
+    for (; IVector::sub(it->getPoint(), inters->getEnd(), logger)->norm(IVector::NORM::NORM_2) > 1e-6; it->doStep())
         output(it->getPoint());
+
+    delete it;
 
     std::cout << "Iteratre intersetion end->beg\n";
     // iterate over compact end -> beg
-    for (auto it = inters->end(IVector::createVector(3, data, logger));
+    for (it = inters->end(IVector::createVector(3, data, logger));
          IVector::sub(it->getPoint(), inters->getBegin(), logger)->norm(IVector::NORM::NORM_2) > 1e-6; it->doStep())
         output(it->getPoint());
 
+    delete it;
 
     // iterate with specific direction and other data
     data[0] = 0.07;
@@ -219,15 +222,25 @@ int main( int argc, char *argv[] )
     double dirData[] = {2, 0, 1};
 
     std::cout << "Iteratre intersection beg-> end with order 2 0 1\n";
-    auto it = inters->begin(IVector::createVector(3, data, logger));
+    it = inters->begin(IVector::createVector(3, data, logger));
     auto dir = IVector::createVector(3, dirData, nullptr);
     it->setDirection(dir);
     for (; IVector::sub(it->getPoint(), inters->getEnd(), logger)->norm(IVector::NORM::NORM_2) > 1e-6; it->doStep())
         output(it->getPoint());
 
     delete dir;
+    delete it;
 #endif /* ITERATE */
 
     logger->destroyLogger(argv[0]);
+
+    delete compact1;
+    delete compact2;
+    delete compact3;
+    delete compact4;
+    delete compact5;
+    delete unify;
+    delete inters;
+
 	return 0;
 }

@@ -224,7 +224,7 @@ public:
         //adds step to current value in iterator
         RESULT_CODE doStep() override
         {
-            // redo!
+
             IVector *v = current->clone();
             bool done = false;
 
@@ -232,6 +232,17 @@ public:
                     begin = compact->getBegin(),
                     end = compact->getEnd();
             auto dim = compact->getDim();
+
+            // the goal idea:
+            // check if it is available to do step along the axis number dir[0]
+            // (current[dir[0]] += step[dir[0]])
+            // if it is possible - step is done
+            // if it it not possible (comapct does not contain such point) -
+            //    if current[dir[0]] is end[dir[0]] - try axis dir[1] and so on until
+            //    step is done
+            //    if current[dir[0]] is not end[dir[0]] - set current[dir[0]] := end[dir[0]]
+            // if step was not done - current == end
+
             for (size_t i = 0; i < dim && !done; i++)
             {
                 size_t idx = static_cast<size_t>(std::round(dir->getCoord(i)));

@@ -4,7 +4,14 @@
 #include "IVector.h"
 #include "ICompact.h"
 
-class IProblem
+#ifdef _WIN32
+#define DECLSPEC __declspec(dllexport)
+#else
+#define DECLSPEC
+#endif
+
+
+class DECLSPEC IProblem
 {
 public:
   enum InterfaceTypes

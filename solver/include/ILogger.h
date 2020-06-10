@@ -2,13 +2,7 @@
 #define ILOGGER_H
 #include "RC.h"
 
-#ifdef _WIN32
-#define DECLSPEC __declspec(dllimport)
-#else
-#define DECLSPEC
-#endif
-
-class DECLSPEC ILogger {
+class ILogger {
 public:
     static ILogger* createLogger(void* pClient);
     virtual void destroyLogger(void* pClient) = 0;

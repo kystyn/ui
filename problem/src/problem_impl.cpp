@@ -3,11 +3,6 @@
 #include "include/IProblem.h"
 #include "include/IBrocker.h"
 
-#ifdef _WIN32
-#define DECLSPEC __declspec(dllexport)
-#else
-#define DECLSPEC
-#endif
 
 namespace
 {
@@ -22,7 +17,7 @@ namespace
  * where
  * Tc - count of positions to be cheked in the turn
  */
-class DECLSPEC ProblemImpl : public IProblem
+class ProblemImpl : public IProblem
 {
 public:
     //args - x , params - coef
@@ -174,7 +169,7 @@ ProblemImpl::ProblemImpl() : params(nullptr)
     logger = ILogger::createLogger(this);
 }
 
-class DECLSPEC BrockerImpl : public IBrocker
+class BrockerImpl : public IBrocker
 {
 private:
     BrockerImpl()

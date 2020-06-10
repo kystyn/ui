@@ -5,13 +5,7 @@
 
 #include "ILogger.h"
 
-#ifdef _WIN32
-#define DECLSPEC __declspec(dllimport)
-#else
-#define DECLSPEC
-#endif
-
-class DECLSPEC IVector {
+class IVector {
 public:
     enum class NORM {
         NORM_1,

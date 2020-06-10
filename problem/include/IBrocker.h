@@ -3,7 +3,14 @@
 #include "ILogger.h"
 #include "RC.h"
 
-class IBrocker
+#ifdef _WIN32
+#define DECLSPEC __declspec(dllexport)
+#else
+#define DECLSPEC
+#endif
+
+
+class DECLSPEC IBrocker
 {
 public:
     enum InterfaceTypes

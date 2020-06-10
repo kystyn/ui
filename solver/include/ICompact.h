@@ -5,13 +5,7 @@ class IVector;
 #include "ILogger.h"
 #include<stddef.h>
 
-#ifdef _WIN32
-#define DECLSPEC __declspec(dllimport)
-#else
-#define DECLSPEC
-#endif
-
-class DECLSPEC ICompact
+class ICompact
 {
 public:
     class iterator;
