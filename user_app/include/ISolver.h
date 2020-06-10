@@ -22,6 +22,11 @@ public:
     };
 
     virtual RESULT_CODE setParams(IVector const* params) = 0;
+    /* Grammar:
+     * dim = {INT}; step = {DOUBLE[DIM]}
+     * example:
+     * dim = 3; step = 0.01, 0.02, 0.03
+     */
     virtual RESULT_CODE setParams(QString& str) = 0;
     virtual RESULT_CODE setProblem(IProblem *pProblem) = 0;
     virtual RESULT_CODE setProblemParams(IVector const* params) = 0;

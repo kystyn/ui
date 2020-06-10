@@ -78,6 +78,8 @@ int main(int argc, char *argv[])
     if (problem == nullptr)
     {
         std::cout << "Problem was not loaded\n";
+        if (logger != nullptr)
+            logger->destroyLogger(argv[0]);
         return 0;
     }
 
@@ -93,6 +95,8 @@ int main(int argc, char *argv[])
     {
         std::cout << "Solver was not loaded\n";
         problemBrocker->release();
+        if (logger != nullptr)
+            logger->destroyLogger(argv[0]);
         return 0;
     }
 
@@ -106,7 +110,7 @@ int main(int argc, char *argv[])
         std::cin >> data[i];
 
     data[0] = 1;
-    data[1] = 10;
+    data[1] = 100;
 
     IVector *v;
 
@@ -119,6 +123,8 @@ int main(int argc, char *argv[])
     {
         problemBrocker->release();
         solverBrocker->release();
+        if (logger != nullptr)
+            logger->destroyLogger(argv[0]);
         return 0;
     }
 
@@ -128,6 +134,8 @@ int main(int argc, char *argv[])
     {
         problemBrocker->release();
         solverBrocker->release();
+        if (logger != nullptr)
+            logger->destroyLogger(argv[0]);
         return 0;
     }
 
@@ -135,22 +143,29 @@ int main(int argc, char *argv[])
     std::cin >> dim;
     dim = 2;
     std::cout << "Input solver params vector, separated with ws or enter: ";
+    std::string s = "dim = 2; step = 0.002, 0.003";
+    /*
     data = new double[dim];
     for (size_t i = 0; i < dim; i++)
         std::cin >> data[i];
 
-    data[0] = 0.02;
-    data[1] = 0.03;
+    data[0] = 0.002;
+    data[1] = 0.003;
 
-    v = IVector::createVector(dim, data, logger);
-    rc = solver->setParams(v);
+    v = IVector::createVector(dim, data, logger);*/
+    QString qs(s.c_str());
+    rc = solver->setParams(qs);
+    /*
     delete []data;
     delete v;
+    */
 
-    if (rc != RESULT_CODE::SUCCESS){
-
+    if (rc != RESULT_CODE::SUCCESS)
+    {
         problemBrocker->release();
         solverBrocker->release();
+        if (logger != nullptr)
+            logger->destroyLogger(argv[0]);
         return 0;
     }
 
@@ -187,6 +202,8 @@ int main(int argc, char *argv[])
     {
         problemBrocker->release();
         solverBrocker->release();
+        if (logger != nullptr)
+            logger->destroyLogger(argv[0]);
         return 0;
     }
 
@@ -195,6 +212,7 @@ int main(int argc, char *argv[])
     {
         problemBrocker->release();
         solverBrocker->release();
+        logger->destroyLogger(argv[0]);
         return 0;
     }
 
@@ -212,7 +230,8 @@ int main(int argc, char *argv[])
 
     problemBrocker->release();
     solverBrocker->release();
-    logger->destroyLogger(argv[0]);
+    if (logger != nullptr)
+        logger->destroyLogger(argv[0]);
     return 0;
 }
 

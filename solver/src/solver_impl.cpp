@@ -1,3 +1,6 @@
+#include <QStringList>
+#include <QRegExp>
+
 #include "include/ISolver.h"
 #include "include/IBrocker.h"
 
@@ -70,8 +73,100 @@ RESULT_CODE SolverImpl::setParams(const IVector *params)
     return RESULT_CODE::SUCCESS;
 }
 
+/* Grammar:
+ * dim = {INT}; step = {DOUBLE[DIM]}
+ * example:
+ * dim = 3; step = 0.01, 0.02, 0.03
+ */
 RESULT_CODE SolverImpl::setParams(QString &str)
 {
+    struct Grammar
+    {
+        const QString paramSeparator = ";";
+        const QString coordSeparator = ",";
+        const QString assign = "=";
+        const QString dimension = "dim";
+        const QString step = "step";
+        const QRegExp ws = QRegExp(QString("\\s"));
+        const int paramsCount = 2;
+        const int dummy = 0; // for better padding!
+    } g;
+    auto res = str.split(g.paramSeparator, QString::SplitBehavior::SkipEmptyParts);
+    if (res.size() != g.paramsCount)
+    {
+        if (logger != nullptr)
+            logger->log("Bad grammar of params string", RESULT_CODE::WRONG_ARGUMENT);
+        return RESULT_CODE::WRONG_ARGUMENT;
+    }
+
+    bool ok;
+    uint dim = 0;
+    double *data = nullptr;
+    for (auto str : res)
+    {
+        auto args = str.split(g.assign, QString::SplitBehavior::SkipEmptyParts);
+
+        if (args.size() != 2)
+        {
+            if (logger != nullptr)
+                logger->log("Bad param grammar: should be KEY = VALUE", RESULT_CODE::WRONG_ARGUMENT);
+            return RESULT_CODE::WRONG_ARGUMENT;
+        }
+
+        if (args[0].remove(g.ws) == g.dimension)
+        {
+            dim = args[1].toUInt(&ok);
+            if (!ok)
+            {
+                if (logger != nullptr)
+                    logger->log("Bad grammar: dimension should be uint", RESULT_CODE::WRONG_ARGUMENT);
+                return RESULT_CODE::WRONG_ARGUMENT;
+            }
+        }
+        else if (args[0].remove(g.ws) == g.step)
+        {
+            auto stp = args[1].split(g.coordSeparator);
+
+            // here could be check dim == str.size() but we allow user to choose args order
+            // if this condition won't be passed, vector will not be created and we will detect it
+
+            auto sz = stp.size();
+            data = new (std::nothrow) double[sz];
+
+            for (int i = 0; i < sz; i++)
+            {
+                data[i] = stp[i].toDouble(&ok);
+
+                if (!ok)
+                {
+                    if (logger != nullptr)
+                        logger->log("Bad grammar: coord should be double", RESULT_CODE::WRONG_ARGUMENT);
+
+                    delete []data;
+                    return RESULT_CODE::WRONG_ARGUMENT;
+                }
+            }
+        }
+        else
+        {
+            if (logger != nullptr)
+                logger->log("Bad grammar: wrong param name", RESULT_CODE::WRONG_ARGUMENT);
+            return RESULT_CODE::WRONG_ARGUMENT;
+        }
+    }
+
+    IVector *v = IVector::createVector(dim, data, logger);
+    delete []data;
+
+    if (v != nullptr)
+    {
+        params = v;
+        return RESULT_CODE::SUCCESS;
+    }
+
+    if (logger != nullptr)
+        logger->log("Something went wrong while creating param vector", RESULT_CODE::WRONG_ARGUMENT);
+    return RESULT_CODE::WRONG_ARGUMENT;
 }
 
 RESULT_CODE SolverImpl::setProblem(IProblem *pProblem)
