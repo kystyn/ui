@@ -4,8 +4,11 @@ project(set LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_FIND_LIBRARY_PREFIXES "" "lib")
 
 add_library(${PROJECT_NAME} SHARED src/set_impl.cpp include/ISet.h)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
 
 find_library(LLOGGER_FOUND NAMES logger PATHS libs)
 find_library(LVECTOR_FOUND NAMES vector PATHS libs)

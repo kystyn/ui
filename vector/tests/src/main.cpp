@@ -77,6 +77,18 @@ bool vecClone( IVector *vec )
     return check5Dim(vec, {1, 2, 3, 4, 5});
 }
 
+bool vecEquals( IVector *v1, IVector *v2 )
+{
+    bool eq;
+    auto rc = IVector::equals(v1, v2, IVector::NORM::NORM_INF, tol, &eq, nullptr);
+    return rc == RESULT_CODE::SUCCESS && eq;
+}
+
+bool vecNotEquals( IVector *v1, IVector *v2 )
+{
+    return !vecEquals(v1, v2);
+}
+
 int main( int argc, char *argv[] )
 {
     ILogger *logger = ILogger::createLogger(argv[0]);
@@ -113,6 +125,9 @@ int main( int argc, char *argv[] )
     test("Dot product of compatible vectors", vecDotVec, gooddot);
     test("Dot product of incompatible vectors", std::isnan, baddot);
     test("Clone", vecClone, v3);
+    test("Equals", vecEquals, v1, v3);
+    test("Not equals with compatible vec", vecNotEquals, v1, v2);
+    test("Not equals with null", vecNotEquals, v1, static_cast<IVector *>(nullptr));
 
     std::cout << (allPassed ? "ALL TESTS PASSED" : "TESTS FAILED") << "\n";
 

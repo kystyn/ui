@@ -4,6 +4,7 @@ project(set_test LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_FIND_LIBRARY_PREFIXES "" "lib")
 
 add_executable(${PROJECT_NAME} src/main.cpp)
 

@@ -65,11 +65,6 @@ public:
         operator delete[](coords, ptr);
     }
 
-    double * getCoords() const
-    {
-        return coords;
-    }
-
     // coords should be guaranteed alive array for all runtime
     VectorImpl(size_t dim, double *coords, ILogger *pLogger) :
         coords(coords), logger(pLogger), dim(dim)
@@ -81,6 +76,19 @@ private:
     ILogger *logger;
     size_t dim;
 };
+}
+
+double * getCoords( IVector const *v )
+{
+    auto dim = v->getDim();
+    double *data = new double[dim];
+    if (data == nullptr)
+        return nullptr;
+
+    for (size_t i = 0; i < dim; i++)
+        data[i] = v->getCoord(i);
+
+    return data;
 }
 
 IVector * IVector::createVector(size_t dim, double* pData, ILogger *logger)
@@ -103,9 +111,8 @@ IVector * IVector::createVector(size_t dim, double* pData, ILogger *logger)
         return nullptr;
     }
 
-    memcpy(bulk + sizeof(VectorImpl), pData, sizeof(double) * dim);
-
     auto vec = new (bulk) VectorImpl(dim, reinterpret_cast<double *>(bulk + sizeof(VectorImpl)), logger);
+    memcpy(bulk + sizeof(VectorImpl), pData, sizeof(double) * dim);
 
     return vec;
 }
@@ -126,7 +133,9 @@ IVector * IVector::add(IVector const* pOperand1, IVector const* pOperand2, ILogg
         return nullptr;
     }
 
-    auto res = createVector(pOperand1->getDim(), reinterpret_cast<VectorImpl const *>(pOperand1)->getCoords(), logger);
+    auto data = getCoords(pOperand1);
+    auto res = createVector(pOperand1->getDim(), data, logger);
+    delete []data;
 
     // no log message cause already called in createVector if needsed
     if (res == nullptr)
@@ -158,7 +167,9 @@ IVector * IVector::sub(IVector const* pOperand1, IVector const* pOperand2, ILogg
         return nullptr;
     }
 
-    auto res = createVector(pOperand1->getDim(), reinterpret_cast<VectorImpl const *>(pOperand1)->getCoords(), logger);
+    auto data = getCoords(pOperand1);
+    auto res = createVector(pOperand1->getDim(), data, logger);
+    delete []data;
 
     if (res == nullptr)
         return nullptr;
@@ -182,7 +193,9 @@ IVector * IVector::mul(IVector const* pOperand1, double scaleParam, ILogger *log
         return nullptr;
     }
 
-    auto res = createVector(pOperand1->getDim(), reinterpret_cast<VectorImpl const *>(pOperand1)->getCoords(), logger);
+    auto data = getCoords(pOperand1);
+    auto res = createVector(pOperand1->getDim(), data, logger);
+    delete []data;
 
     if (res == nullptr)
         return nullptr;
@@ -245,5 +258,7 @@ RESULT_CODE IVector::equals(
         return RESULT_CODE::BAD_REFERENCE;
 
     *result = diff->norm(norm) < tolerance;
+    delete diff;
+
     return RESULT_CODE::SUCCESS;
 }

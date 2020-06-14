@@ -8,7 +8,7 @@ namespace
 class SetImpl : public ISet
 {
 public:
-    SetImpl( ILogger *logger ) : pLogger(logger)
+    SetImpl( ILogger *logger ) : logger(logger)
     {}
 
     ~SetImpl() override
@@ -20,25 +20,34 @@ public:
     {
         IVector *diff;
 
+        if (pVector == nullptr)
+        {
+            if (logger != nullptr)
+                logger->log("In Set::insert: null param", RESULT_CODE::BAD_REFERENCE);
+            return RESULT_CODE::BAD_REFERENCE;
+        }
+
         if (!elements.empty())
             if (pVector->getDim() != getDim())
             {
-		if (pLogger != nullptr)
-	            pLogger->log("In Set::insert", RESULT_CODE::WRONG_DIM);
+                if (logger != nullptr)
+                    logger->log("In Set::insert", RESULT_CODE::WRONG_DIM);
                 return RESULT_CODE::WRONG_DIM;
             }
 
         for (auto elem: elements)
         {
-            diff = IVector::sub(pVector, elem, pLogger);
+            diff = IVector::sub(pVector, elem, logger);
             if (diff == nullptr)
                 continue;
             if (diff->norm(norm) < tolerance)
             {
- 		if (pLogger != nullptr)
-                    pLogger->log("In Set::insert", RESULT_CODE::MULTIPLE_DEFINITION);
+                if (logger != nullptr)
+                    logger->log("In Set::insert", RESULT_CODE::MULTIPLE_DEFINITION);
+                delete diff;
                 return RESULT_CODE::MULTIPLE_DEFINITION;
             }
+            delete diff;
         }
 
         elements.push_back(pVector->clone());
@@ -49,34 +58,54 @@ public:
     {
         if (index >= elements.size())
         {
-            if (pLogger != nullptr)
-                pLogger->log("In Set::get", RESULT_CODE::OUT_OF_BOUNDS);
+            if (logger != nullptr)
+                logger->log("In Set::get", RESULT_CODE::OUT_OF_BOUNDS);
             return RESULT_CODE::OUT_OF_BOUNDS;
         }
 
-        pVector = const_cast<IVector *>(elements[index]);
+        pVector = const_cast<IVector *>(elements[index]->clone());
         return RESULT_CODE::SUCCESS;
     }
 
     RESULT_CODE get( IVector*& pVector, IVector const* pSample, IVector::NORM norm, double tolerance ) const override
     {
+        if (pSample == nullptr)
+        {
+            if (logger != nullptr)
+                logger->log("set::get: null param", RESULT_CODE::BAD_REFERENCE);
+            return RESULT_CODE::BAD_REFERENCE;
+        }
+
+        if (pSample->getDim() != getDim())
+        {
+            if (logger != nullptr)
+                logger->log("set::get: null param", RESULT_CODE::BAD_REFERENCE);
+            return RESULT_CODE::BAD_REFERENCE;
+        }
+
         IVector *diff = nullptr;
+
         for (auto elem: elements)
         {
-            diff = IVector::sub(pSample, elem, pLogger);
+            diff = IVector::sub(pSample, elem, logger);
             if (diff == nullptr)
-                continue;
+            {
+                if (logger != nullptr)
+                    logger->log("set::et: unexpected situatuion ?!", RESULT_CODE::BAD_REFERENCE);
+                return RESULT_CODE::BAD_REFERENCE;
+            }
+
             if (diff->norm(norm) < tolerance)
             {
-                pVector = const_cast<IVector *>(elem);
+                pVector = const_cast<IVector *>(elem->clone());
                 delete diff;
                 return RESULT_CODE::SUCCESS;
             }
-        }
-	if (pLogger != nullptr)		
-            pLogger->log("In Set::get", RESULT_CODE::NOT_FOUND);
-        if (diff != nullptr)
             delete diff;
+        }
+
+        if (logger != nullptr)
+            logger->log("In Set::get", RESULT_CODE::NOT_FOUND);
         return RESULT_CODE::NOT_FOUND;
     }
 
@@ -103,8 +132,8 @@ public:
     {
         if (index >= elements.size())
         {
-	    if (pLogger != nullptr)
-                pLogger->log("In Set::erase", RESULT_CODE::NOT_FOUND);
+           if (logger != nullptr)
+                logger->log("In Set::erase", RESULT_CODE::NOT_FOUND);
             return RESULT_CODE::NOT_FOUND;
         }
         auto itToDel = elements.begin() + index;
@@ -120,9 +149,9 @@ public:
         long searchIdx = 0;
         for (auto elem: elements)
         {
-            diff = IVector::sub(pSample, elem, pLogger);
+            diff = IVector::sub(pSample, elem, logger);
             if (diff == nullptr)
-                continue;
+                break;
             if (diff->norm(norm) < tolerance)
             {
                 delete diff;
@@ -130,22 +159,22 @@ public:
                 elements.erase(elements.begin() + searchIdx);
                 return RESULT_CODE::SUCCESS;
             }
+            delete diff;
             searchIdx++;
         }
-        if (diff != nullptr)
-            delete diff;
-	if (pLogger != nullptr)
-            pLogger->log("In Set::erase", RESULT_CODE::NOT_FOUND);
+        delete diff;
+        if (logger != nullptr)
+            logger->log("In Set::erase", RESULT_CODE::NOT_FOUND);
         return RESULT_CODE::NOT_FOUND;
     }
 
     ISet * clone() const override
     {
-        SetImpl *set = new SetImpl(pLogger);
+        SetImpl *set = new (std::nothrow) SetImpl(logger);
         if (set == nullptr)
         {
-	    if (pLogger != nullptr)
-                pLogger->log("In Set::clone", RESULT_CODE::OUT_OF_MEMORY);
+            if (logger != nullptr)
+                logger->log("In Set::clone", RESULT_CODE::OUT_OF_MEMORY);
             return nullptr;
         }
 
@@ -157,14 +186,9 @@ public:
         return set;
     }
 
-protected:
-    SetImpl()
-    {
-        pLogger = ILogger::createLogger(this);
-    }
 private:
     std::vector<IVector const *> elements;
-    ILogger* pLogger;
+    ILogger* logger;
 };
 }
 
@@ -180,7 +204,7 @@ ISet * ISet::add( ISet const* pOperand1, ISet const* pOperand2, IVector::NORM no
 {
     if (pOperand1 == nullptr && pOperand2 == nullptr)
     {
-	if (pLogger != nullptr)
+        if (pLogger != nullptr)
             pLogger->log("Set::add: Both operands null", RESULT_CODE::BAD_REFERENCE);
         return nullptr;
     }
@@ -198,6 +222,7 @@ ISet * ISet::add( ISet const* pOperand1, ISet const* pOperand2, IVector::NORM no
     {
         pOperand2->get(elem2, i); // guaranteed ok
         sum->insert(elem2, norm, tolerance);
+        delete elem2;
     }
 
     return sum;
@@ -221,9 +246,14 @@ ISet * ISet::intersect( ISet const* pOperand1, ISet const* pOperand2, IVector::N
     for (size_t i = 0; i < pOperand2->getSize(); i++)
     {
         pOperand2->get(elem, i); // guaranteed ok
+
         auto rc = pOperand1->get(elemFound, elem, norm, tolerance);
         if (rc == RESULT_CODE::SUCCESS)
+        {
             intersection->insert(elem, norm, tolerance);
+            delete elemFound;
+        }
+        delete elem;
     }
 
     return intersection;
@@ -249,10 +279,13 @@ ISet * ISet::sub( ISet const* pOperand1, ISet const* pOperand2, IVector::NORM no
     IVector *elem, *elemFound;
     for (size_t i = 0; i < pOperand1->getSize(); i++)
     {
+        elemFound = nullptr;
         pOperand1->get(elem, i); // guaranteed ok
         auto rc = pOperand2->get(elemFound, elem, norm, tolerance);
         if (rc == RESULT_CODE::NOT_FOUND)
             diff->insert(elem, norm, tolerance);
+        delete elem;
+        delete elemFound;
     }
 
     return diff;
@@ -263,5 +296,8 @@ ISet * ISet::symSub( ISet const* pOperand1, ISet const* pOperand2, IVector::NORM
     ISet *unified = ISet::add(pOperand1, pOperand2, norm, tolerance, pLogger);
     ISet *intersection = ISet::intersect(pOperand1, pOperand2, norm, tolerance, pLogger);
 
-    return ISet::sub(unified, intersection, norm, tolerance, pLogger);
+    auto symsub = ISet::sub(unified, intersection, norm, tolerance, pLogger);
+    delete unified;
+    delete intersection;
+    return symsub;
 }

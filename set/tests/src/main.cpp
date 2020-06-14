@@ -1,5 +1,7 @@
 #include <iostream>
+#include <array>
 #include "../include/ISet.h"
+#include "../include/tester.h"
 
 void print( ISet *set )
 {
@@ -19,6 +21,191 @@ void print( ISet *set )
     }
 }
 
+const double tol = 1e-6;
+
+template<size_t dim>
+bool checkEqualVec( IVector *vec, std::array<double, dim> const &reference )
+{
+    if (vec == nullptr)
+        return false;
+    if (vec->getDim() != dim)
+        return false;
+
+    for (size_t i = 0; i < dim ; i++)
+        if (std::abs(vec->getCoord(i) - reference[i]) > tol)
+            return false;
+    return true;
+}
+
+template<size_t setSize, size_t dim>
+bool checkEqualSet( ISet *set, std::array<std::array<double, dim>, setSize> const &reference )
+{
+    IVector *v, *pv;
+
+    if (set->getSize() != setSize)
+        return false;
+
+    for (size_t i = 0; i < setSize; i++)
+    {
+        v = IVector::createVector(dim, const_cast<double *>(reference[i].data()), nullptr);
+        auto rc = set->get(pv, v, IVector::NORM::NORM_2, tol);
+        if (rc != RESULT_CODE::SUCCESS)
+        {
+            delete v;
+            delete pv;
+            return false;
+        }
+
+        if (!checkEqualVec(pv, reference[i]))
+        {
+            delete v;
+            delete pv;
+            return false;
+        }
+        delete v;
+        delete pv;
+    }
+    return true;
+}
+
+bool set1( ISet *set )
+{
+    return
+            checkEqualSet<10, 2>(set,
+            {
+                std::array<double, 2>{0., 0.},
+                                     {2., 3.},
+                                     {4., 6.},
+                                     {6., 9.},
+                                     {8., 12.},
+                                     {10., 15.},
+                                     {12., 18.},
+                                     {14., 21.},
+                                     {16., 24.},
+                                     {18., 27.}
+            });
+}
+
+bool set2( ISet *set )
+{
+    return
+            checkEqualSet<8, 2>(set,
+            {
+                std::array<double, 2>{0., 0.},
+                                     {4., 6.},
+                                     {8., 12.},
+                                     {12., 18.},
+                                     {16., 24.},
+                                     {20., 30.},
+                                     {24., 36.},
+                                     {28., 42.}
+            });
+}
+
+bool unify12( ISet *set )
+{
+    return
+            checkEqualSet<13, 2>(set,
+            {
+                std::array<double, 2>{0., 0.},
+                                    {2., 3.},
+                                    {4., 6.},
+                                    {6., 9.},
+                                    {8., 12.},
+                                    {10., 15.},
+                                    {12., 18.},
+                                    {14., 21.},
+                                    {16., 24.},
+                                    {18., 27.},
+                                    {20., 30.},
+                                    {24., 36.},
+                                    {28., 42.}
+            });
+}
+
+bool unify12_erase( ISet *set )
+{
+    return
+            checkEqualSet<12, 2>(set,
+            {
+                std::array<double, 2>{0., 0.},
+                                    {2., 3.},
+                                    {4., 6.},
+                                    {6., 9.},
+                                    {8., 12.},
+                                    {10., 15.},
+                                    {12., 18.},
+                                    {14., 21.},
+                                    {16., 24.},
+                                    {18., 27.},
+                                    {20., 30.},
+                                    {24., 36.}
+            });
+}
+
+bool symsub12( ISet *set )
+{
+    return
+            checkEqualSet<8, 2>(set,
+            {
+                std::array<double, 2>{20., 30.},
+                                     {24., 36.},
+                                     {28., 42.},
+                                    {2., 3.},
+                                    {6., 9.},
+                                    {10., 15.},
+                                    {14., 21.},
+                                    {18., 27.}
+            });
+}
+
+bool sub_unify_1( ISet *set )
+{
+    return
+            checkEqualSet<3, 2>(set,
+            {
+                std::array<double, 2>{20., 30.},
+                                     {24., 36.},
+                                     {28., 42.}
+            });
+}
+
+bool intersect12( ISet *set )
+{
+    return
+            checkEqualSet<5, 2>(set,
+            {
+                std::array<double, 2>{0., 0.},
+                                     {4., 6.},
+                                     {8., 12.},
+                                     {12., 18.},
+                                     {16., 24.}
+            });
+}
+
+bool erase1( ISet *set )
+{
+    return
+            checkEqualSet<9, 2>(set,
+            {
+                std::array<double, 2>{0., 0.},
+                                     {4., 6.},
+                                     {6., 9.},
+                                     {8., 12.},
+                                     {10., 15.},
+                                     {12., 18.},
+                                     {14., 21.},
+                                     {16., 24.},
+                                     {18., 27.}
+            });
+}
+
+bool istrue( bool f )
+{
+    return f;
+}
+
+
 int main( int argc, char *argv[])
 {
     ILogger *logger = ILogger::createLogger(argv[0]);
@@ -33,78 +220,85 @@ int main( int argc, char *argv[])
     for (int i = 0; i < 10; i++) {
         data[0] = i * 2;
         data[1] = i * 3;
-        s1->insert(IVector::createVector(2, data, logger), IVector::NORM::NORM_2, 1e-6);
+        auto v = IVector::createVector(2, data, logger);
+        s1->insert(v, IVector::NORM::NORM_2, tol);
+        delete v;
     }
 
-    std::cout << "S1\n";
-    print(s1);
-
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 8; i++) {
         data[0] = i * 4;
         data[1] = i * 6;
-        s2->insert(IVector::createVector(2, data, logger), IVector::NORM::NORM_2, 1e-6);
+        auto v = IVector::createVector(2, data, logger);
+        s2->insert(v, IVector::NORM::NORM_2, tol);
+        delete v;
     }
-
-    std::cout << "S2\n";
-    print(s2);
 
     auto unify = ISet::add(s1, s2, IVector::NORM::NORM_2, 1e-6, logger);
 
-    std::cout << "Unify\n";
-    print(unify);
+    test("Correctly generated set1", set1, s1);
+    test("Correctly generated set2", set2, s2);
+    test("Unify set1 and set2", unify12, unify);
 
-    std::cout << "Try add bad dim\n";
-    auto res = unify->insert(IVector::createVector(3, data, logger), IVector::NORM::NORM_2, 1e-6);
-    std::cout << (res == RESULT_CODE::WRONG_DIM ? "Wrong dim\n" : "test failed\n");
+    data[2] = 10;
+    auto v = IVector::createVector(3, data, logger);
+    auto insBadDim = unify->insert(v, IVector::NORM::NORM_2, 1e-6);
+    delete v;
 
-    ISet *s3 = ISet::createSet(logger);
+    test("Bad dim insert (check RC)", istrue, insBadDim != RESULT_CODE::SUCCESS);
+    test("Bad dim insert (check save content)", unify12, unify);
 
-    data[0] = 0;
-    data[1] = 0;
-    s3->insert(IVector::createVector(2, data, logger), IVector::NORM::NORM_2, 1e-6);
+    auto insNull = unify->insert(nullptr, IVector::NORM::NORM_2, 1e-6);
 
-    data[0] = 1;
-    data[1] = 1;
-    s3->insert(IVector::createVector(2, data, logger), IVector::NORM::NORM_2, 1e-6);
+    test("Insert null (check RC)", istrue, insNull != RESULT_CODE::SUCCESS);
+    test("Bad dim insert (check save content)", unify12, unify);
 
-    data[0] = 2;
-    data[1] = 3;
-    s3->insert(IVector::createVector(2, data, logger), IVector::NORM::NORM_2, 1e-6);
+    ISet *s3 = unify->clone();
+    test("Clone", unify12, s3);
 
-    logger->log("Staying alive", RESULT_CODE::SUCCESS);
+    auto sub = ISet::sub(s3, s1, IVector::NORM::NORM_2, 1e-6, logger);
+    test("Sub", sub_unify_1, sub);
+    delete sub;
 
-    std::cout << "S3\n";
-    print(s3);
+    sub = ISet::sub(nullptr, s1, IVector::NORM::NORM_2, 1e-6, logger);
+    test("Sub from null", istrue, sub == nullptr);
 
-    auto sub = ISet::sub(s3, unify, IVector::NORM::NORM_2, 1e-6, logger);
+    auto symsub = ISet::symSub(s1, s2, IVector::NORM::NORM_2, 1e-6, logger);
+    test("Symm sub", symsub12, symsub);
+    delete symsub;
 
-    std::cout << "Subtract\n";
-    print(sub);
+    symsub = ISet::symSub(s1, nullptr, IVector::NORM::NORM_2, 1e-6, logger);
+    test("Sym sub with null", set1, s1);
+    delete symsub;
 
-    auto symsub = ISet::symSub(s3, unify, IVector::NORM::NORM_2, 1e-6, logger);
+    auto intersect = ISet::intersect(s1, s2, IVector::NORM::NORM_2, 1e-6, logger);
+    test("Intersect", intersect12, intersect);
+    delete intersect;
 
-    std::cout << "Symmetric subtract\n";
-    print(symsub);
+    intersect = ISet::intersect(nullptr, s2, IVector::NORM::NORM_2, 1e-6, logger);
+    test("Intersect with null", istrue, intersect == nullptr);
 
-    auto intersect = ISet::intersect(s3, unify, IVector::NORM::NORM_2, 1e-6, logger);
-
-    std::cout << "Intersect\n";
-    print(intersect);
-
-    unify->erase(1);
+    s1->erase(1);
+    test("Erase by compatible idx", erase1, s1);
 
     data[0] = 28;
     data[1] = 42;
-    unify->erase(IVector::createVector(2, data, logger), IVector::NORM::NORM_2, 1e-6);
-    std::cout << "Unify after erase\n";
-    print(unify);
+    v = IVector::createVector(2, data, logger);
+    unify->erase(v, IVector::NORM::NORM_2, 1e-6);
+    delete v;
+
+    test("Erase by value", unify12_erase, unify);
+
+    auto errc = s1->erase(1000);
+
+    test("Erase by bad idx (check RC)", istrue, errc != RESULT_CODE::SUCCESS);
+    test("Erase by bad idx (check save content)", erase1, s1);
+
+    std::cout << (allPassed ? "ALL TESTS PASSED" : "TESTS FAILED") << "\n";
 
     delete s1;
     delete s2;
     delete unify;
     delete s3;
-    delete sub;
-    delete symsub;
     delete intersect;
 
     logger->destroyLogger(argv[0]);

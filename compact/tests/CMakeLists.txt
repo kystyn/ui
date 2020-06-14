@@ -3,6 +3,7 @@ project(compact_test)
 cmake_minimum_required(VERSION 3.4)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_FIND_LIBRARY_PREFIXES "" "lib")
 
 find_library(LLOGGER_FOUND NAME logger PATHS libs)
 find_library(LVECTOR_FOUND NAME vector PATHS libs)
