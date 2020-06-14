@@ -105,12 +105,20 @@ double * getCoords( IVector const *v )
 
 IVector * IVector::createVector(size_t dim, double* pData, ILogger *logger)
 {
+    if (dim == 0)
+    {
+        if (logger != nullptr)
+            logger->log("createVector: 0 dimension", RESULT_CODE::WRONG_DIM);
+        return nullptr;
+    }
+
     if (pData == nullptr)
-	{
+    {
         if (logger != nullptr)
 			logger->log("createVector: null param", RESULT_CODE::BAD_REFERENCE);
 		return nullptr;
-	}
+    }
+
     for (size_t i = 0; i < dim; ++i)
         if (std::isnan(pData[i]))
         {
