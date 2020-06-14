@@ -6,4 +6,5 @@ doc
 libs
 bin
 *.user
+tests
 

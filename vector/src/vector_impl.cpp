@@ -26,7 +26,19 @@ public:
     RESULT_CODE setCoord(size_t index, double value) override
     {
         if (index >= dim)
-            return RESULT_CODE::WRONG_ARGUMENT;
+	{
+            if (logger != nullptr)
+		logger->log("Vector::setCoord: wrong dimension", RESULT_CODE::WRONG_DIM);
+            return RESULT_CODE::WRONG_DIM;
+	}
+
+	if (std::isnan(value))
+	{
+	    if (logger != nullptr)
+		logger->log("Vector::setCoord: not a number", RESULT_CODE::NAN_VALUE);
+            return RESULT_CODE::NAN_VALUE;
+	}
+
         coords[index] = value;
         return RESULT_CODE::SUCCESS;
     }
@@ -93,6 +105,12 @@ double * getCoords( IVector const *v )
 
 IVector * IVector::createVector(size_t dim, double* pData, ILogger *logger)
 {
+    if (pData == nullptr)
+	{
+        if (logger != nullptr)
+			logger->log("createVector: null param", RESULT_CODE::BAD_REFERENCE);
+		return nullptr;
+	}
     for (size_t i = 0; i < dim; ++i)
         if (std::isnan(pData[i]))
         {
@@ -238,6 +256,9 @@ RESULT_CODE IVector::equals(
         IVector const* pOperand1, IVector const* pOperand2,
         NORM norm, double tolerance, bool* result, ILogger* pLogger)
 {
+    if (std::isnan(tolerance))
+	return RESULT_CODE::NAN_VALUE;
+
     if (pOperand1 == nullptr || pOperand2 == nullptr)
     {
         if (pLogger != nullptr)

@@ -1,6 +1,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <new>
+#include <algorithm>
 //#include <iostream>
 
 #include "../include/ICompact.h"
@@ -412,6 +413,8 @@ ICompact * ICompact::intersection(ICompact const* const left, ICompact const* co
         return nullptr;
     }
 
+    auto dim = left->getDim();
+
     bool inters;
     auto rc = left->isIntersects(right, inters);
 
@@ -424,9 +427,28 @@ ICompact * ICompact::intersection(ICompact const* const left, ICompact const* co
 
     if (inters)
     {
+        auto *data = new (std::nothrow) double[dim];
+        if (data == nullptr)
+        {
+            if (logger != nullptr)
+                logger->log("intersection: out of memory", RESULT_CODE::OUT_OF_MEMORY);
+            return nullptr;
+        }
         auto
-                l = max(left->getBegin(), right->getBegin()),
-                r = min(left->getEnd(), right->getEnd());
+                l = IVector::createVector(dim, data, logger),
+                r = IVector::createVector(dim, data, logger);
+
+        auto
+                lbeg = left->getBegin(),
+                rbeg = right->getBegin(),
+                lend = left->getEnd(),
+                rend = right->getEnd();
+
+        for (size_t i = 0; i < dim; i++)
+        {
+            l->setCoord(i, std::max(lbeg->getCoord(i), rbeg->getCoord(i)));
+            r->setCoord(i, std::min(lend->getCoord(i), rend->getCoord(i)));
+        }
         return createCompact(l, r, logger);
     }
 
