@@ -83,7 +83,9 @@ bool checkCompactEqual( ICompact *c,
     IVector *end = IVector::createVector(dim, const_cast<double *>(endAr.data()), logger);
 
     bool eq;
-    auto rc = IVector::equals(c->getBegin(), beg, IVector::NORM::NORM_2, tol, &eq, logger);
+    auto gotbeg = c->getBegin();
+    auto rc = IVector::equals(gotbeg, beg, IVector::NORM::NORM_2, tol, &eq, logger);
+    delete gotbeg;
     if (rc != RESULT_CODE::SUCCESS || !eq)
     {
         delete beg;
@@ -91,7 +93,9 @@ bool checkCompactEqual( ICompact *c,
         return false;
     }
 
-    rc = IVector::equals(c->getEnd(), end, IVector::NORM::NORM_2, tol, &eq, logger);
+    auto gotend = c->getEnd();
+    rc = IVector::equals(gotend, end, IVector::NORM::NORM_2, tol, &eq, logger);
+    delete gotend;
 
     if (rc != RESULT_CODE::SUCCESS || !eq)
     {
@@ -135,16 +139,18 @@ int main( int argc, char *argv[] )
 
     auto unify = ICompact::add(compact1, compact2, logger);
     test("Correct unify 1 2: ", checkCompactEqual<3>, unify, {0, 0, 0}, {1, 1, 1}, logger);
+    delete unify;
 
     auto compact3 = createCompact<3, 3>({0.5, 0.5, 0.5}, {1.5, 1.5, 1.5}, logger);
     test("Create good compact 3", checkCompactEqual<3>, compact3, {0.5, 0.5, 0.5}, {1.5, 1.5, 1.5}, logger);
 
     unify = ICompact::add(compact1, compact3, logger);
-
     test("Unify 1 and 3 (no)", isBadCompact, unify);
+    delete unify;
 
     auto convh = ICompact::makeConvex(compact1, compact3, logger);
     test("Convex hull of 1 and 3", checkCompactEqual<3>, convh, {0, 0, 0}, {1.5, 1.5, 1.5}, logger);
+    delete convh;
 
     auto inters = ICompact::intersection(compact3, compact1, logger);
     test("Intersect 3 and 1", checkCompactEqual<3>, inters, {0.5, 0.5, 0.5}, {1, 1, 1}, logger);

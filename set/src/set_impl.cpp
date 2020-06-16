@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <new>
+#include <cmath>
 #include <vector>
 #include "../include/ISet.h"
 
@@ -19,6 +20,13 @@ public:
     RESULT_CODE insert( const IVector* pVector, IVector::NORM norm, double tolerance ) override
     {
         IVector *diff;
+
+	if (std::isnan(tolerance) || tolerance < 0)
+	{
+	    if (logger != nullptr)
+		logger->log("In set::insert: NAN tolerance", RESULT_CODE::NAN_VALUE);
+	    return RESULT_CODE::NAN_VALUE;
+	}
 
         if (pVector == nullptr)
         {
@@ -69,6 +77,13 @@ public:
 
     RESULT_CODE get( IVector*& pVector, IVector const* pSample, IVector::NORM norm, double tolerance ) const override
     {
+	if (std::isnan(tolerance) || tolerance < 0)
+	{
+	    if (logger != nullptr)
+		logger->log("In set::insert: NAN tolerance", RESULT_CODE::NAN_VALUE);
+	    return RESULT_CODE::NAN_VALUE;
+	}
+
         if (pSample == nullptr)
         {
             if (logger != nullptr)
@@ -145,6 +160,13 @@ public:
 
     RESULT_CODE erase( IVector const* pSample, IVector::NORM norm, double tolerance ) override
     {
+	if (std::isnan(tolerance) || tolerance < 0)
+	{
+	    if (logger != nullptr)
+		logger->log("In set::insert: NAN tolerance", RESULT_CODE::NAN_VALUE);
+	    return RESULT_CODE::NAN_VALUE;
+	}
+
         IVector *diff = nullptr;
         long searchIdx = 0;
         for (auto elem: elements)
@@ -162,7 +184,6 @@ public:
             delete diff;
             searchIdx++;
         }
-        delete diff;
         if (logger != nullptr)
             logger->log("In Set::erase", RESULT_CODE::NOT_FOUND);
         return RESULT_CODE::NOT_FOUND;
@@ -202,6 +223,13 @@ ISet * ISet::createSet( ILogger* pLogger )
 
 ISet * ISet::add( ISet const* pOperand1, ISet const* pOperand2, IVector::NORM norm, double tolerance, ILogger* pLogger )
 {
+    if (std::isnan(tolerance) || tolerance < 0)
+    {
+        if (pLogger != nullptr)
+	    pLogger->log("In set::insert: NAN tolerance", RESULT_CODE::NAN_VALUE);
+	return nullptr;
+    }
+
     if (pOperand1 == nullptr && pOperand2 == nullptr)
     {
         if (pLogger != nullptr)
@@ -210,11 +238,26 @@ ISet * ISet::add( ISet const* pOperand1, ISet const* pOperand2, IVector::NORM no
     }
 
     if (pOperand1 == nullptr)
-        return pOperand2->clone();
+    {
+        if (pOperand2 != nullptr)
+            return pOperand2->clone();
+	return nullptr;
+    }
 
     if (pOperand2 == nullptr)
-        return pOperand1->clone();
+    {
+	if (pOperand1 != nullptr)
+            return pOperand1->clone();
+	return nullptr;
+    }
 
+    if (pOperand1->getDim() != pOperand2->getDim())
+    {
+        if (pLogger != nullptr)
+            pLogger->log("In set::add: dim mismatch", RESULT_CODE::WRONG_DIM);
+	return nullptr;
+    }
+   
     ISet *sum = pOperand1->clone();
     IVector *elem2;
 
@@ -230,12 +273,27 @@ ISet * ISet::add( ISet const* pOperand1, ISet const* pOperand2, IVector::NORM no
 
 ISet * ISet::intersect( ISet const* pOperand1, ISet const* pOperand2, IVector::NORM norm, double tolerance, ILogger* pLogger )
 {
+    if (std::isnan(tolerance) || tolerance < 0)
+    {
+        if (pLogger != nullptr)
+            pLogger->log("In set::insert: NAN tolerance", RESULT_CODE::NAN_VALUE);
+	return nullptr;
+    }
+
     if (pOperand1 == nullptr || pOperand2 == nullptr)
     {
         if (pLogger != nullptr)
             pLogger->log("Set::intersect: some of operands is null", RESULT_CODE::BAD_REFERENCE);
         return nullptr;
     }
+
+    if (pOperand1->getDim() != pOperand2->getDim())
+    {
+        if (pLogger != nullptr)
+            pLogger->log("Set::intersect: dim mismatch", RESULT_CODE::WRONG_DIM);
+        return nullptr;
+    }
+
 
     ISet *intersection = ISet::createSet(pLogger);
 
@@ -261,6 +319,14 @@ ISet * ISet::intersect( ISet const* pOperand1, ISet const* pOperand2, IVector::N
 
 ISet * ISet::sub( ISet const* pOperand1, ISet const* pOperand2, IVector::NORM norm, double tolerance, ILogger* pLogger )
 {
+    if (std::isnan(tolerance) || tolerance < 0)
+    {
+        if (pLogger != nullptr)
+            pLogger->log("In set::insert: NAN tolerance", RESULT_CODE::NAN_VALUE);
+	return nullptr;
+    }
+
+
     if (pOperand1 == nullptr)
     {
 	if (pLogger != nullptr)
@@ -293,6 +359,13 @@ ISet * ISet::sub( ISet const* pOperand1, ISet const* pOperand2, IVector::NORM no
 
 ISet * ISet::symSub( ISet const* pOperand1, ISet const* pOperand2, IVector::NORM norm, double tolerance, ILogger* pLogger )
 {
+    if (std::isnan(tolerance) || tolerance < 0)
+    {
+        if (pLogger != nullptr)
+            pLogger->log("In set::insert: NAN tolerance", RESULT_CODE::NAN_VALUE);
+	return nullptr;
+    }
+
     ISet *unified = ISet::add(pOperand1, pOperand2, norm, tolerance, pLogger);
     ISet *intersection = ISet::intersect(pOperand1, pOperand2, norm, tolerance, pLogger);
 

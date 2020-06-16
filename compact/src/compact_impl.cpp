@@ -72,12 +72,12 @@ public:
 
     IVector * getBegin() const override
     {
-        return theLeft;
+        return theLeft->clone();
     }
 
     IVector* getEnd() const override
     {
-        return theRight;
+        return theRight->clone();
     }
 
     RESULT_CODE isContains(IVector const* const vec, bool& result) const override
@@ -427,7 +427,7 @@ ICompact * ICompact::intersection(ICompact const* const left, ICompact const* co
 
     if (inters)
     {
-        auto *data = new (std::nothrow) double[dim];
+        auto *data = new (std::nothrow) double[dim]{0};
         if (data == nullptr)
         {
             if (logger != nullptr)
@@ -437,6 +437,8 @@ ICompact * ICompact::intersection(ICompact const* const left, ICompact const* co
         auto
                 l = IVector::createVector(dim, data, logger),
                 r = IVector::createVector(dim, data, logger);
+
+	delete []data;
 
         auto
                 lbeg = left->getBegin(),
@@ -449,7 +451,17 @@ ICompact * ICompact::intersection(ICompact const* const left, ICompact const* co
             l->setCoord(i, std::max(lbeg->getCoord(i), rbeg->getCoord(i)));
             r->setCoord(i, std::min(lend->getCoord(i), rend->getCoord(i)));
         }
-        return createCompact(l, r, logger);
+        delete lbeg;
+        delete lend;
+        delete rbeg;
+        delete rend;
+
+        auto c = createCompact(l, r, logger);
+
+        delete l;
+        delete r;
+
+        return c;
     }
 
     if (logger != nullptr)
@@ -468,29 +480,73 @@ ICompact* ICompact::add(ICompact const* const left, ICompact const* const right,
     }
 
     // not connected => nullptr
-    if (isLess(left->getEnd(), right->getBegin()) ||
-        isLess(right->getEnd(), left->getBegin()))
+    auto
+            lbeg = left->getBegin(),
+            rbeg = right->getBegin(),
+            lend = left->getEnd(),
+            rend = right->getEnd();
+
+    if (isLess(lend, rbeg) || isLess(rend, lbeg))
+    {
+        delete lbeg;
+        delete rbeg;
+        delete lend;
+        delete rend;
         return nullptr;
+    }
 
     // right in left!!!
     auto compactIsInCompact = []( ICompact const * const lhs, ICompact const * const rhs )
     {
-        return
-                isLess(lhs->getBegin(), rhs->getBegin()) &&
-                isLess(rhs->getEnd(), lhs->getEnd());
+        auto
+                lbeg = lhs->getBegin(),
+                rbeg = rhs->getBegin(),
+                lend = lhs->getEnd(),
+                rend = rhs->getEnd();
+        bool res =
+                isLess(lbeg, rbeg) &&
+                isLess(rend, lend);
+
+        delete lbeg;
+        delete rbeg;
+        delete lend;
+        delete rend;
+
+        return res;
     };
 
     if (compactIsInCompact(left, right))
-        return left->clone();
-    if (compactIsInCompact(right, left))
-        return right->clone();
+    {
+        delete lbeg;
+        delete rbeg;
+        delete lend;
+        delete rend;
 
-    auto dbegin = IVector::sub(left->getBegin(), right->getBegin(), logger);
+        return left->clone();
+    }
+
+    if (compactIsInCompact(right, left))
+    {
+        delete lbeg;
+        delete rbeg;
+        delete lend;
+        delete rend;
+
+        return right->clone();
+    }
+
+    auto dbegin = IVector::sub(lbeg, rbeg, logger);
 
     if (dbegin == nullptr)
     {
         if (logger != nullptr)
             logger->log("add: nonconsistent begin", RESULT_CODE::WRONG_ARGUMENT);
+
+        delete lbeg;
+        delete rbeg;
+        delete lend;
+        delete rend;
+
         return nullptr;
     }
 
@@ -515,20 +571,44 @@ ICompact* ICompact::add(ICompact const* const left, ICompact const* const right,
     int axisNoBeg, axisNoEnd;
     if (checkParallel(dbegin, axisNoBeg))
     {
-        auto dend = IVector::sub(left->getEnd(), right->getEnd(), logger);
+        auto dend = IVector::sub(lend, rend, logger);
 
         if (dend == nullptr)
         {
             if (logger != nullptr)
                 logger->log("add: nonconsistent end", RESULT_CODE::WRONG_ARGUMENT);
+
+            delete lbeg;
+            delete rbeg;
+            delete lend;
+            delete rend;
+
             return nullptr;
         }
 
         if (checkParallel(dend, axisNoEnd))
             if (axisNoBeg == axisNoEnd)
-                return createCompact(min(left->getBegin(), right->getBegin()),
-                                     max(left->getEnd(), right->getEnd()), logger);
+            {
+                delete dbegin;
+                delete dend;
+                auto c = createCompact(min(lbeg, rbeg), max(lend, rend), logger);
+
+                delete lbeg;
+                delete rbeg;
+                delete lend;
+                delete rend;
+
+                return c;
+            }
+        delete dend;
     }
+
+    delete dbegin;
+
+    delete lbeg;
+    delete rbeg;
+    delete lend;
+    delete rend;
 
     if (logger != nullptr)
         logger->log("add: cannot create convex union. Try makeConvex instead", RESULT_CODE::WRONG_ARGUMENT);
@@ -544,6 +624,19 @@ ICompact * ICompact::makeConvex(ICompact const* const left, ICompact const* cons
         return nullptr;
     }
 
-    return createCompact(min(left->getBegin(), right->getBegin()),
-                         max(left->getEnd(), right->getEnd()), logger);
+    auto
+            lbeg = left->getBegin(),
+            rbeg = right->getBegin(),
+            lend = left->getEnd(),
+            rend = right->getEnd();
+
+    auto c = createCompact(min(lbeg, rbeg),
+                         max(lend, rend), logger);
+
+    delete lbeg;
+    delete lend;
+    delete rbeg;
+    delete rend;
+
+    return c;
 }
