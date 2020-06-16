@@ -1,11 +1,45 @@
 #include <iostream>
+#include <cmath>
 #include <cassert>
+#include <array>
 #include "../include/ICompact.h"
 #include "../include/IVector.h"
 #include "../include/ILogger.h"
+#include "../include/tester.h"
 
 // uncomment lower define if you want to see iterator work
-#define ITERATE
+//#define ITERATE
+
+const double tol = 1e-6;
+
+template<size_t dim1, size_t dim2>
+ICompact * createCompact( std::array<double, dim1> const &begAr,
+                              std::array<double, dim2> const &endAr,
+                              ILogger *logger )
+{
+    IVector *beg = IVector::createVector(dim1, const_cast<double *>(begAr.data()), logger);
+    IVector *end = IVector::createVector(dim2, const_cast<double *>(endAr.data()), logger);
+
+    auto compact = ICompact::createCompact(beg, end, logger);
+    delete beg;
+    delete end;
+
+    return compact;
+}
+
+bool isBadCompact( ICompact *c)
+{
+    return c == nullptr;
+}
+
+ICompact * createCompactWithNull( ILogger *logger )
+{
+    double data[] = {1, 2, 3};
+    auto vec = IVector::createVector(3, data, logger);
+    ICompact *c = ICompact::createCompact(nullptr, vec, logger);
+    delete vec;
+    return c;
+}
 
 void output( IVector *vec )
 {
@@ -32,170 +66,138 @@ void output( std::string const &text, ICompact *compact )
     output(compact->getEnd());
 }
 
+bool istrue( bool f )
+{
+    return f;
+}
+
+template<size_t dim>
+bool checkCompactEqual( ICompact *c,
+                        std::array<double, dim> const &begAr,
+                        std::array<double, dim> const &endAr,
+                        ILogger *logger )
+{
+    if (c == nullptr)
+        return false;
+    IVector *beg = IVector::createVector(dim, const_cast<double *>(begAr.data()), logger);
+    IVector *end = IVector::createVector(dim, const_cast<double *>(endAr.data()), logger);
+
+    bool eq;
+    auto rc = IVector::equals(c->getBegin(), beg, IVector::NORM::NORM_2, tol, &eq, logger);
+    if (rc != RESULT_CODE::SUCCESS || !eq)
+    {
+        delete beg;
+        delete end;
+        return false;
+    }
+
+    rc = IVector::equals(c->getEnd(), end, IVector::NORM::NORM_2, tol, &eq, logger);
+
+    if (rc != RESULT_CODE::SUCCESS || !eq)
+    {
+        delete beg;
+        delete end;
+        return false;
+    }
+
+    delete beg;
+    delete end;
+    return true;
+}
 
 int main( int argc, char *argv[] )
 {
     ILogger *logger = ILogger::createLogger(argv[0]);
 
-    double data[] = {0, 0, 0};
-    IVector *begin = IVector::createVector(3, data, logger);
-    if (begin == nullptr)
-        std::cout << "not create begin\n";
+    auto compact1 = createCompact<3, 3>({0, 0, 0}, {1, 1, 1}, logger);
+    test("Create good compact 1", checkCompactEqual<3>, compact1, {0, 0, 0}, {1, 1, 1}, logger);
+    delete compact1;
 
-    data[0] = data[1] = data[2] = 1;
+    compact1 = createCompact<3, 3>({1, 1, 1}, {0, 0, 0}, logger);
+    test("Create good compact 1 (begin >= right)", checkCompactEqual<3>, compact1, {0, 0, 0}, {1, 1, 1}, logger);
 
-    IVector *end = IVector::createVector(3, data, nullptr);
-    if (end == nullptr)
-        std::cout << "not create end\n";
+    auto compact2 = createCompact<3, 2>({0, 0, 0}, {1, 1}, logger);
+    test("Create bad compact (dim mismatch)", isBadCompact, compact2);
 
-    // good compact 1
-    std::cout << "good compact\n";
-    ICompact *compact1 = ICompact::createCompact(begin, end, logger);
+    compact2 = createCompact<3, 3>({0, 0, 0}, {1, NAN, 2}, logger);
+    test("Create bad compact (NAN)", isBadCompact, compact2);
 
-    delete begin;
-    if (compact1 == nullptr)
-        std::cout << "compact1 not create\n";
-    output("Compact 1: ", compact1);
+    compact2 = createCompactWithNull(logger);
+    test("Create bad compact (null param)", isBadCompact, compact2);
 
-    // bad compact
-    begin = IVector::createVector(2, data, logger);
-    ICompact *compact2 = ICompact::createCompact(begin, end, logger);
+    compact2 = createCompact<3, 3>({0, 0, 0}, {1, -1, 2}, logger);
+    test("Create bad compact (begin !<= right)", isBadCompact, compact2);
 
-    if (compact2 != nullptr)
-    {
-        std::cout << "created compact2 but should not\n";
-        output("Compact 2: ", compact2);
-    }
+    test("Check dimension", istrue, compact1->getDim() == 3);
 
-    compact2 = ICompact::createCompact(begin, end, nullptr);
-    delete begin;
-    if (compact2 != nullptr)
-        std::cout << "bad compact2 could not create\n";
-
-    std::cout << "dim compact 1: " << compact1->getDim() << "\n";
-
-    // good compact 2
-    data[0] = data[1] = data[2] = 0.5;
-    begin = IVector::createVector(3, data, logger);
-
-    if (begin == nullptr)
-        std::cout << "begin 0.5 not create\n";
-
-    compact2 = ICompact::createCompact(begin, end, logger);
-
-    if (compact2 == nullptr)
-        std::cout << "good compact 2 not create\n";
-
-    output("Compact 2: ", compact2);
+    compact2 = createCompact<3, 3>({0.5, 0.5, 0.5}, {1, 1, 1}, logger);
+    test("Create good compact 2", checkCompactEqual<3>, compact2, {0.5, 0.5, 0.5}, {1, 1, 1}, logger);
 
     auto unify = ICompact::add(compact1, compact2, logger);
+    test("Correct unify 1 2: ", checkCompactEqual<3>, unify, {0, 0, 0}, {1, 1, 1}, logger);
 
-    // unify: one in other
-    if (unify == nullptr)
-        std::cout << "not unidfied 1 and 2 but should\n";
-
-    output("unify 1 and 2: ", unify);
-
-    // good compact 3
-    data[0] = data[1] = data[2] = 1.5;
-    end = IVector::createVector(3, data, logger);
-
-    if (end == nullptr)
-        std::cout << "end 1.5 not create\n";
-
-    ICompact *compact3 = ICompact::createCompact(begin, end, logger);
-
-    if (compact3 == nullptr)
-        std::cout << "compact 3 not create\n";
-
-    output("Compact 3: ", compact3);
+    auto compact3 = createCompact<3, 3>({0.5, 0.5, 0.5}, {1.5, 1.5, 1.5}, logger);
+    test("Create good compact 3", checkCompactEqual<3>, compact3, {0.5, 0.5, 0.5}, {1.5, 1.5, 1.5}, logger);
 
     unify = ICompact::add(compact1, compact3, logger);
 
-    if (unify != nullptr)
-    {
-        std::cout << "no unify but create\n";
-        output("Unify 1 and 3:", unify);
-    }
-    else
-    {
-        auto convh = ICompact::makeConvex(compact1, compact3, logger);
-        if (convh == nullptr)
-            std::cout << "smth went wrong makeConvex\n";
-        else
-            output("Convex hull 1 and 3 compact: ", convh);
-    }
+    test("Unify 1 and 3 (no)", isBadCompact, unify);
+
+    auto convh = ICompact::makeConvex(compact1, compact3, logger);
+    test("Convex hull of 1 and 3", checkCompactEqual<3>, convh, {0, 0, 0}, {1.5, 1.5, 1.5}, logger);
 
     auto inters = ICompact::intersection(compact3, compact1, logger);
+    test("Intersect 3 and 1", checkCompactEqual<3>, inters, {0.5, 0.5, 0.5}, {1, 1, 1}, logger);
+    delete inters;
 
-    if (inters == nullptr)
-        std::cout << "has intersection but not create\n";
+    inters = ICompact::intersection(nullptr, compact1, logger);
+    test("Intersect null and 1", isBadCompact, inters);
 
-    output("Intersection 3 and 1: ", inters);
+    inters = ICompact::intersection(compact1, compact2, logger);
+    test("Intersect 1 and 2 (easy)", checkCompactEqual<3>, inters, {0.5, 0.5, 0.5}, {1, 1, 1}, logger);
+    delete inters;
 
-    data[0] = 0.5;
-    data[1] = 1.;
-    data[2] = 0.5;
+    auto compact4 = createCompact<3, 3>({0.3, -0.5, -0.5}, {0.4, 1.2, 0.4}, logger);
+    test("Create compact 4", checkCompactEqual<3>, compact4, {0.3, -0.5, -0.5}, {0.4, 1.2, 0.4}, logger);
+
+    inters = ICompact::intersection(compact1, compact4, logger);
+    test("Intersect 1 and 4 (hard)", checkCompactEqual<3>, inters, {0.3, 0, 0}, {0.4, 1, 0.4}, logger);
+
+    double data[3];
+    data[0] = 0.35;
+    data[1] = 0.99;
+    data[2] = 0.2;
+
     auto pt = IVector::createVector(3, data, logger);
     bool cntns;
-    inters->isContains(pt, cntns);
-    std::cout << "Intersection contains 0.5 1. 0.5: " << (cntns ? "yes" : "no") << "\n";
+    auto rc = inters->isContains(pt, cntns);
+
+    test("Contains (yes)", istrue, cntns && rc == RESULT_CODE::SUCCESS);
 
     pt->setCoord(0, 10);
     pt->setCoord(1, 1.1);
+
     inters->isContains(pt, cntns);
-    std::cout << "Intersection contains 10 1.1 0.5: " << (cntns ? "yes" : "no") << "\n";
+    test("Contains (no)", istrue, !cntns && rc == RESULT_CODE::SUCCESS);
+    delete inters;
 
-    data[0] = 0.1;
-    data[1] = 0.2;
-    data[2] = 0.15;
 
-    //good compact 4
-    data[0] = 0.5;
-    data[1] = 0;
-    data[2] = 0;
-    begin = IVector::createVector(3, data, logger);
+    auto compact5 = createCompact<3, 3>({2, 2, 2}, {3, 3, 3}, logger);
+    inters = ICompact::intersection(compact1, compact5, logger);
+    test("Intersect 1 and 5 (no inters)", isBadCompact, inters);
+    delete inters;
 
-    data[0] = 1;
-    data[1] = 1;
-    data[2] = 1.5;
-    end = IVector::createVector(3, data, logger);
+    auto compact6 = createCompact<3, 3>({0.5, 0, 0}, {1, 1, 1.5}, logger);
 
-    auto compact4 = ICompact::createCompact(begin, end, logger);
-    delete end;
+    unify = ICompact::add(compact1, compact6, logger);
+    test("Unify 1 and 6 (axis parallel but diff)", isBadCompact, unify);
+    delete unify;
 
-    if (compact4 == nullptr)
-        std::cout << "compact 4 not create\n";
+    auto compact7 = createCompact<3, 3>({0, 0.5, 0}, {1, 1.5, 1}, logger);
+    test("Create compact 7", checkCompactEqual<3>, compact7, {0, 0.5, 0}, {1, 1.5, 1}, logger);
+    unify = ICompact::add(compact1, compact7, logger);
 
-    output("Compact 4: ", compact4);
-
-    unify = ICompact::add(compact1, compact4, logger);
-    if (unify != nullptr)
-    {
-        std::cout << "could not unify 1 and 4 compact but did\n";
-        output("unify 1 4: ", unify);
-    }
-
-    data[0] = 1.5;
-    data[1] = 1;
-    data[2] = 1;
-    end = IVector::createVector(3, data, logger);
-
-    auto compact5 = ICompact::createCompact(begin, end, logger);
-    delete begin;
-    delete end;
-
-    if (compact5 == nullptr)
-        std::cout << "compact 5 not create\n";
-
-    output("Compact 5: ", compact5);
-
-    unify = ICompact::add(compact1, compact5, logger);
-    if (unify != nullptr)
-        output("unify 1 5: ", unify);
-    else
-        std::cout << "could not unify 1 and 5 compact but should\n";
-
+    test("Unify 1 and 7 (ok)", checkCompactEqual<3>, unify, {0, 0, 0}, {1, 1.5, 1}, logger);
 
 #ifdef ITERATE
     std::cout << "Iteratre intersetion beg->end\n";
@@ -239,8 +241,13 @@ int main( int argc, char *argv[] )
     delete compact3;
     delete compact4;
     delete compact5;
+    delete compact6;
+    delete compact7;
     delete unify;
     delete inters;
+    delete pt;
+
+    std::cout << (allPassed ? "ALL TESTS PASSED" : "TESTS FAILED") << "\n";
 
 	return 0;
 }
