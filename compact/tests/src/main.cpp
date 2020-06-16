@@ -115,22 +115,26 @@ int main( int argc, char *argv[] )
 
     auto compact1 = createCompact<3, 3>({0, 0, 0}, {1, 1, 1}, logger);
     test("Create good compact 1", checkCompactEqual<3>, compact1, {0, 0, 0}, {1, 1, 1}, logger);
-    delete compact1;
 
-    compact1 = createCompact<3, 3>({1, 1, 1}, {0, 0, 0}, logger);
-    test("Create good compact 1 (begin >= right)", checkCompactEqual<3>, compact1, {0, 0, 0}, {1, 1, 1}, logger);
+    auto compact2 = createCompact<3, 3>({1, 1, 1}, {0, 0, 0}, logger);
+    test("Create bad compact (begin > right)", isBadCompact, compact2);
+    delete compact2;
 
-    auto compact2 = createCompact<3, 2>({0, 0, 0}, {1, 1}, logger);
+    compact2 = createCompact<3, 2>({0, 0, 0}, {1, 1}, logger);
     test("Create bad compact (dim mismatch)", isBadCompact, compact2);
+    delete compact2;
 
     compact2 = createCompact<3, 3>({0, 0, 0}, {1, NAN, 2}, logger);
     test("Create bad compact (NAN)", isBadCompact, compact2);
+    delete compact2;
 
     compact2 = createCompactWithNull(logger);
     test("Create bad compact (null param)", isBadCompact, compact2);
+    delete compact2;
 
     compact2 = createCompact<3, 3>({0, 0, 0}, {1, -1, 2}, logger);
     test("Create bad compact (begin !<= right)", isBadCompact, compact2);
+    delete compact2;
 
     test("Check dimension", istrue, compact1->getDim() == 3);
 

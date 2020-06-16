@@ -391,7 +391,7 @@ ICompact * ICompact::createCompact(IVector const* const begin, IVector const* co
     }
 
     auto lessBegEnd = isLess(begin, end);
-    if (!lessBegEnd && !isLess(end, begin))
+    if (!lessBegEnd)
     {
         if (logger != nullptr)
             logger->log("createCompact: bounds are not comparable", RESULT_CODE::WRONG_ARGUMENT);
@@ -399,9 +399,7 @@ ICompact * ICompact::createCompact(IVector const* const begin, IVector const* co
     }
 
     // always should: begin < end!
-    if (lessBegEnd)
-        return new (std::nothrow) CompactImpl(const_cast<IVector *>(begin), const_cast<IVector *>(end), logger);
-    return new (std::nothrow) CompactImpl(const_cast<IVector *>(end), const_cast<IVector *>(begin), logger);
+    return new (std::nothrow) CompactImpl(const_cast<IVector *>(begin), const_cast<IVector *>(end), logger);
 }
 
 ICompact * ICompact::intersection(ICompact const* const left, ICompact const* const right, ILogger* logger)

@@ -230,27 +230,13 @@ ISet * ISet::add( ISet const* pOperand1, ISet const* pOperand2, IVector::NORM no
 	return nullptr;
     }
 
-    if (pOperand1 == nullptr && pOperand2 == nullptr)
+    if (pOperand1 == nullptr || pOperand2 == nullptr)
     {
         if (pLogger != nullptr)
-            pLogger->log("Set::add: Both operands null", RESULT_CODE::BAD_REFERENCE);
+            pLogger->log("Set::add: operand null", RESULT_CODE::BAD_REFERENCE);
         return nullptr;
     }
-
-    if (pOperand1 == nullptr)
-    {
-        if (pOperand2 != nullptr)
-            return pOperand2->clone();
-	return nullptr;
-    }
-
-    if (pOperand2 == nullptr)
-    {
-	if (pOperand1 != nullptr)
-            return pOperand1->clone();
-	return nullptr;
-    }
-
+    
     if (pOperand1->getDim() != pOperand2->getDim())
     {
         if (pLogger != nullptr)
@@ -327,15 +313,12 @@ ISet * ISet::sub( ISet const* pOperand1, ISet const* pOperand2, IVector::NORM no
     }
 
 
-    if (pOperand1 == nullptr)
+    if (pOperand1 == nullptr || pOperand2 == nullptr)
     {
 	if (pLogger != nullptr)
             pLogger->log("Set::subtract: operand is null", RESULT_CODE::BAD_REFERENCE);
         return nullptr;
     }
-
-    if (pOperand2 == nullptr)
-        return pOperand1->clone();
 
     ISet *diff = ISet::createSet(pLogger);
 
