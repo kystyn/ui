@@ -3,6 +3,8 @@
 #include "../include/ISet.h"
 #include "../include/tester.h"
 
+ILogger *logger;
+
 void print( ISet *set )
 {
     IVector *v;
@@ -47,7 +49,7 @@ bool checkEqualSet( ISet *set, std::array<std::array<double, dim>, setSize> cons
 
     for (size_t i = 0; i < setSize; i++)
     {
-        v = IVector::createVector(dim, const_cast<double *>(reference[i].data()), nullptr);
+        v = IVector::createVector(dim, const_cast<double *>(reference[i].data()), logger);
         auto rc = set->get(pv, v, IVector::NORM::NORM_2, tol);
         if (rc != RESULT_CODE::SUCCESS)
         {
@@ -208,7 +210,7 @@ bool istrue( bool f )
 
 int main( int argc, char *argv[])
 {
-    ILogger *logger = ILogger::createLogger(argv[0]);
+    logger = ILogger::createLogger(argv[0]);
     if (logger->setLogFile("set.log") != RESULT_CODE::SUCCESS)
         std::cout << "Incorrect log file\n";
 

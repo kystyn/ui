@@ -168,6 +168,15 @@ public:
 
     iterator * begin(IVector const* const step = nullptr) override
     {
+        auto res = isCorrectStep(step, false);
+
+        if (!res)
+        {
+            if (logger != nullptr)
+                logger->log("begin: incorrect step", RESULT_CODE::WRONG_ARGUMENT);
+            return nullptr;
+        }
+
         auto it = new (std::nothrow) iterator(this, step, logger);
         if (it == nullptr)
         {
@@ -179,6 +188,15 @@ public:
 
     iterator * end(IVector const* const step = nullptr) override
     {
+        auto res = isCorrectStep(step, true);
+
+        if (!res)
+        {
+            if (logger != nullptr)
+                logger->log("begin: incorrect step", RESULT_CODE::WRONG_ARGUMENT);
+            return nullptr;
+        }
+
         auto it = new (std::nothrow) iterator(this, step, logger, true);
         if (it == nullptr)
         {
@@ -194,6 +212,30 @@ public:
         delete theRight;
     }
 
+private:
+    bool isCorrectStep( IVector const * const step, bool reverse )
+    {
+        if (step == nullptr)
+            return false;
+
+        if (step->getDim() != getDim())
+            return false;
+
+        for (size_t i = 0; i < dim; i++)
+        {
+            if (std::isnan(step->getCoord(i)))
+                return false;
+
+            auto crd = step->getCoord(i);
+            if (crd < 0 && !reverse ||
+                crd > 0 && reverse ||
+                std::abs(crd) < tolerance)
+                return false;
+        }
+        return true;
+    }
+
+public:
     class iterator : public ICompact::iterator
     {
         friend class CompactImpl;
@@ -225,13 +267,25 @@ public:
         //adds step to current value in iterator
         RESULT_CODE doStep() override
         {
-
-            IVector *v = current->clone();
             bool done = false;
 
             auto
                     begin = compact->getBegin(),
                     end = compact->getEnd();
+
+            bool eq;
+            auto rc = !reverse ? IVector::equals(end, current, IVector::NORM::NORM_2, tolerance, &eq, logger) :
+                                 IVector::equals(begin, current, IVector::NORM::NORM_2, tolerance, &eq, logger);
+
+            if (eq || rc != RESULT_CODE::SUCCESS)
+            {
+                delete begin;
+                delete end;
+                return RESULT_CODE::OUT_OF_BOUNDS;
+            }
+
+            IVector *v = current->clone();
+
             auto dim = compact->getDim();
 
             // the goal idea:
@@ -266,9 +320,7 @@ public:
                     }
                 }
 
-                // reverse is true => 2 * !reverse - 1 == -1
-                // reverse is false => 2 * !reverse -1 == 1
-                v->setCoord(idx, v->getCoord(idx) + (2 * !reverse - 1) * step->getCoord(idx));
+                v->setCoord(idx, v->getCoord(idx) + step->getCoord(idx));
 
                 bool contains;
                 auto rc = compact->isContains(v, contains);
@@ -302,7 +354,7 @@ public:
 
         IVector* getPoint() const override
         {
-            return current;
+            return current->clone();
         }
 
         //change order of step
@@ -353,6 +405,10 @@ public:
                 }
                 this->dir->setCoord(i, dir->getCoord(i));
             }
+
+            delete current;
+            current = !reverse ? compact->getBegin() : compact->getEnd();
+
             return RESULT_CODE::SUCCESS;
         }
 

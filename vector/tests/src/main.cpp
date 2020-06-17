@@ -10,7 +10,8 @@ double
         coords1[] = {1., 2., 3., 4., 5.},
         coords2[] = {10., 20., 30., 40., 50.};
 
-IVector *vec3dim = IVector::createVector(3, coords1, nullptr);
+ILogger *logger = ILogger::createLogger((void*)0x1488);
+IVector *vec3dim = IVector::createVector(3, coords1, logger);
 
 const double tol = 1e-6;
 
@@ -80,7 +81,7 @@ bool vecClone( IVector *vec )
 bool vecEquals( IVector *v1, IVector *v2 )
 {
     bool eq;
-    auto rc = IVector::equals(v1, v2, IVector::NORM::NORM_INF, tol, &eq, nullptr);
+    auto rc = IVector::equals(v1, v2, IVector::NORM::NORM_INF, tol, &eq, logger);
     return rc == RESULT_CODE::SUCCESS && eq;
 }
 
@@ -91,7 +92,6 @@ bool vecNotEquals( IVector *v1, IVector *v2 )
 
 int main( int argc, char *argv[] )
 {
-    ILogger *logger = ILogger::createLogger(argv[0]);
     IVector
             *v1 = IVector::createVector(5, coords1, logger),
             *v2 = IVector::createVector(5, coords2, logger);
@@ -139,7 +139,7 @@ int main( int argc, char *argv[] )
     delete goodsub;
     delete goodmul;
 
-    logger->destroyLogger(argv[0]);
+    logger->destroyLogger((void*)0x1488);
 
     return 0;
 }

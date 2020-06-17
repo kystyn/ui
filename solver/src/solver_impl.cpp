@@ -268,17 +268,10 @@ RESULT_CODE SolverImpl::solve()
     const double startBestRes = 1e10;
     double bestRes = startBestRes;
     double curRes;
-    for (;; it->doStep())
+
+    for (auto rcf = RESULT_CODE::SUCCESS; rcf == RESULT_CODE::SUCCESS; rcf = it->doStep())
     {
-        auto dist = IVector::sub(end, it->getPoint(), logger);
-
-        if (dist == nullptr)
-        {
-            if (logger != nullptr)
-                logger->log("solve: smth wrong with substraction", RESULT_CODE::WRONG_ARGUMENT);
-            return RESULT_CODE::WRONG_ARGUMENT;
-        }
-
+        
         auto rc = problem->goalFunctionByArgs(it->getPoint(), curRes);
 
         if (rc != RESULT_CODE::SUCCESS)
@@ -308,14 +301,7 @@ RESULT_CODE SolverImpl::solve()
                 }
         }
 
-        if (dist->norm(IVector::NORM::NORM_INF) < tolerance)
-        {
-            delete dist;
-            break;
-        }
-        delete dist;
     }
-
     delete it;
 
     if (std::abs(startBestRes - bestRes) < tolerance)
